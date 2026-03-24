@@ -22,7 +22,7 @@ public class MenuItemService {
     private final MenuSectionRepository menuSectionRepository;
     private final S3Service s3Service;
 
-    @Value("${aws.bucket-name}")
+    @Value("${aws.s3.buckets.restaurant}")
     private String bucketName;
 
     public List<MenuItem> findBySectionId(Long sectionId) {
