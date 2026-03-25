@@ -4,6 +4,7 @@ import com.tommaso.backend.model.MenuItem;
 import com.tommaso.backend.model.MenuSection;
 import com.tommaso.backend.repository.MenuItemRepository;
 import com.tommaso.backend.repository.MenuSectionRepository;
+import com.tommaso.backend.s3.S3Buckets;
 import com.tommaso.backend.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,8 +23,7 @@ public class MenuItemService {
     private final MenuSectionRepository menuSectionRepository;
     private final S3Service s3Service;
 
-    @Value("${aws.s3.buckets.restaurant}")
-    private String bucketName;
+    private S3Buckets s3Buckets;
 
     public List<MenuItem> findBySectionId(Long sectionId) {
         return menuItemRepository.findBySectionId(sectionId);
@@ -40,7 +40,7 @@ public class MenuItemService {
 
         if (image != null && !image.isEmpty()) {
             String key = "menu-items/" + UUID.randomUUID() + "-" + image.getOriginalFilename();
-            s3Service.putObject(bucketName, key, image.getBytes());
+            s3Service.putObject(s3Buckets.getRestaurant(), key, image.getBytes());
             item.setImageUrl(key);
         }
 
@@ -57,7 +57,7 @@ public class MenuItemService {
 
         if (image != null && !image.isEmpty()) {
             String key = "menu-items/" + UUID.randomUUID() + "-" + image.getOriginalFilename();
-            s3Service.putObject(bucketName, key, image.getBytes());
+            s3Service.putObject(s3Buckets.getRestaurant(), key, image.getBytes());
             existing.setImageUrl(key);
         }
 
