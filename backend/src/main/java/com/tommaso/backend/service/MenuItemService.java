@@ -7,7 +7,6 @@ import com.tommaso.backend.repository.MenuSectionRepository;
 import com.tommaso.backend.s3.S3Buckets;
 import com.tommaso.backend.s3.S3Service;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,8 +21,7 @@ public class MenuItemService {
     private final MenuItemRepository menuItemRepository;
     private final MenuSectionRepository menuSectionRepository;
     private final S3Service s3Service;
-
-    private S3Buckets s3Buckets;
+    private final S3Buckets s3Buckets;
 
     public List<MenuItem> findBySectionId(Long sectionId) {
         return menuItemRepository.findBySectionId(sectionId);
