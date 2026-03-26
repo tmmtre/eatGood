@@ -34,39 +34,6 @@ public class UserService {
         return userRepository.existsByEmail(email);
     }
 
-    public void uploadProfileImage(String userId, MultipartFile image) throws IOException {
-        User user = findById(userId);
-
-        if (user.getProfileImageId() != null) {
-            s3Service.deleteObject(
-                    s3Buckets.getRestaurant(),
-                    "profile-images/%s/%s".formatted(userId, user.getProfileImageId())
-            );
-        }
-
-        String imageId = UUID.randomUUID().toString();
-        s3Service.putObject(
-                s3Buckets.getRestaurant(),
-                "profile-images/%s/%s".formatted(userId, imageId),
-                image.getBytes()
-        );
-
-        userRepository.updateProfileImageId(imageId, userId);
-    }
-
-    public byte[] getProfileImage(String userId) {
-        User user = findById(userId);
-
-        if (user.getProfileImageId() == null) {
-            throw new RuntimeException("Profile image not found for user: " + userId);
-        }
-
-        return s3Service.getObject(
-                s3Buckets.getRestaurant(),
-                "profile-images/%s/%s".formatted(userId, user.getProfileImageId())
-        );
-    }
-
     public User update(String id, UserRequest request) {
         User user = findById(id);
         boolean changes = false;
@@ -108,5 +75,38 @@ public class UserService {
             );
         }
         userRepository.deleteById(id);
+    }
+
+    public void uploadProfileImage(String userId, MultipartFile image) throws IOException {
+        User user = findById(userId);
+
+        if (user.getProfileImageId() != null) {
+            s3Service.deleteObject(
+                    s3Buckets.getRestaurant(),
+                    "profile-images/%s/%s".formatted(userId, user.getProfileImageId())
+            );
+        }
+
+        String imageId = UUID.randomUUID().toString();
+        s3Service.putObject(
+                s3Buckets.getRestaurant(),
+                "profile-images/%s/%s".formatted(userId, imageId),
+                image.getBytes()
+        );
+
+        userRepository.updateProfileImageId(imageId, userId);
+    }
+
+    public byte[] getProfileImage(String userId) {
+        User user = findById(userId);
+
+        if (user.getProfileImageId() == null) {
+            throw new RuntimeException("Profile image not found for user: " + userId);
+        }
+
+        return s3Service.getObject(
+                s3Buckets.getRestaurant(),
+                "profile-images/%s/%s".formatted(userId, user.getProfileImageId())
+        );
     }
 }

@@ -3,8 +3,6 @@ package com.tommaso.backend.controller;
 import com.tommaso.backend.dto.request.UserRequest;
 import com.tommaso.backend.dto.response.UserResponse;
 import com.tommaso.backend.mapper.UserMapper;
-import com.tommaso.backend.s3.S3Buckets;
-import com.tommaso.backend.s3.S3Service;
 import com.tommaso.backend.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +20,6 @@ public class UserController {
 
     private final UserService userService;
     private final UserMapper userMapper;
-    private final S3Service s3Service;
-    private final S3Buckets s3Buckets;
 
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getById(@PathVariable String id) {
