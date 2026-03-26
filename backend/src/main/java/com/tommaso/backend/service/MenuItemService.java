@@ -55,9 +55,11 @@ public class MenuItemService {
         existing.setAvailable(updated.getAvailable());
 
         if (image != null && !image.isEmpty()) {
+            if (existing.getImageId() != null) {
+                s3Service.deleteObject(s3Buckets.getRestaurant(), "menu-items/" + existing.getImageId());
+            }
             String imageId = UUID.randomUUID().toString();
-            String key = "menu-items/" + imageId;
-            s3Service.putObject(s3Buckets.getRestaurant(), key, image.getBytes());
+            s3Service.putObject(s3Buckets.getRestaurant(), "menu-items/" + imageId, image.getBytes());
             existing.setImageId(imageId);
         }
 
@@ -65,6 +67,10 @@ public class MenuItemService {
     }
 
     public void delete(Long id) {
+        MenuItem item = findById(id);
+        if (item.getImageId() != null) {
+            s3Service.deleteObject(s3Buckets.getRestaurant(), "menu-items/" + item.getImageId());
+        }
         menuItemRepository.deleteById(id);
     }
 }
