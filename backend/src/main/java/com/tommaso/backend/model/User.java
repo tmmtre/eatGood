@@ -13,7 +13,19 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "users")
+@Table(
+        name = "users",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "user_email_unique",
+                        columnNames = "email"
+                ),
+                @UniqueConstraint(
+                        name = "profile_image_id_unique",
+                        columnNames = "profile_image_id"
+                )
+        }
+)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -39,7 +51,8 @@ public class User {
     @Column(nullable = false)
     private Boolean emailVerified = false;
 
-    private String image;
+    @Column(unique = true)
+    private String profileImageId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

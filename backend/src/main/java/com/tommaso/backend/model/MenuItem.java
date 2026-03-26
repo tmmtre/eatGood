@@ -12,7 +12,13 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "menu_items")
+@Table(
+        name = "menu_items",
+        uniqueConstraints = @UniqueConstraint(
+                name = "menu_item_image_id_unique",
+                columnNames = "image_id"
+        )
+)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -31,7 +37,8 @@ public class MenuItem {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
-    private String imageUrl;
+    @Column(unique = true)
+    private String imageId;
 
     @Column(nullable = false)
     private Boolean available = true;

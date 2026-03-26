@@ -37,9 +37,10 @@ public class MenuItemService {
                 .orElseThrow(() -> new RuntimeException("Menu Section not found"));
 
         if (image != null && !image.isEmpty()) {
-            String key = "menu-items/" + UUID.randomUUID() + "-" + image.getOriginalFilename();
+            String imageId = UUID.randomUUID().toString();
+            String key = "menu-items/" + imageId;
             s3Service.putObject(s3Buckets.getRestaurant(), key, image.getBytes());
-            item.setImageUrl(key);
+            item.setImageId(imageId);
         }
 
         item.setSection(section);
@@ -54,9 +55,10 @@ public class MenuItemService {
         existing.setAvailable(updated.getAvailable());
 
         if (image != null && !image.isEmpty()) {
-            String key = "menu-items/" + UUID.randomUUID() + "-" + image.getOriginalFilename();
+            String imageId = UUID.randomUUID().toString();
+            String key = "menu-items/" + imageId;
             s3Service.putObject(s3Buckets.getRestaurant(), key, image.getBytes());
-            existing.setImageUrl(key);
+            existing.setImageId(imageId);
         }
 
         return menuItemRepository.save(existing);

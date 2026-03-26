@@ -76,8 +76,8 @@ public class MenuItemController {
     }
 
     private MenuItemResponse toResponse(MenuItem i) {
-        String fullImageUrl = i.getImageUrl() != null
-                ? "https://" + s3Buckets.getRestaurant() + ".s3." + awsRegion + ".amazonaws.com/" + i.getImageUrl()
+        String fullImageUrl = i.getImageId() != null
+                ? "https://" + s3Buckets.getRestaurant() + ".s3." + awsRegion + ".amazonaws.com/" + i.getImageId()
                 : null;
         return MenuItemResponse.builder()
                 .id(i.getId())
@@ -85,7 +85,7 @@ public class MenuItemController {
                 .description(i.getDescription())
                 .price(i.getPrice())
                 .available(i.getAvailable())
-                .imageUrl(fullImageUrl)
+                .imageId(fullImageUrl)
                 .createdAt(i.getCreatedAt())
                 .build();
     }

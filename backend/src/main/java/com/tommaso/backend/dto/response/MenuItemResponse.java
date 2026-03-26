@@ -18,6 +18,6 @@ public class MenuItemResponse {
     private String description;
     private BigDecimal price;
     private Boolean available;
-    private String imageUrl;
+    private String imageId;
     private LocalDateTime createdAt;
 }
