@@ -2,12 +2,11 @@ package com.tommaso.backend.controller;
 
 import com.tommaso.backend.dto.request.MenuItemRequest;
 import com.tommaso.backend.dto.response.MenuItemResponse;
+import com.tommaso.backend.mapper.MenuItemMapper;
 import com.tommaso.backend.model.MenuItem;
-import com.tommaso.backend.s3.S3Buckets;
 import com.tommaso.backend.service.MenuItemService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -23,17 +22,14 @@ import java.util.List;
 public class MenuItemController {
 
     private final MenuItemService menuItemService;
-    private final S3Buckets s3Buckets;
-
-    @Value("${aws.region}")
-    private String awsRegion;
+    private final MenuItemMapper menuItemMapper;
 
     @GetMapping("/section/{sectionId}")
     public ResponseEntity<List<MenuItemResponse>> getBySection(
             @PathVariable Long sectionId) {
         return ResponseEntity.ok(
                 menuItemService.findBySectionId(sectionId).stream()
-                        .map(this::toResponse)
+                        .map(menuItemMapper)
                         .toList()
         );
     }
@@ -51,7 +47,7 @@ public class MenuItemController {
                 .available(request.getAvailable())
                 .build();
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(toResponse(menuItemService.create(sectionId, item, image)));
+                .body(menuItemMapper.apply(menuItemService.create(sectionId, item, image)));
     }
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -66,27 +62,12 @@ public class MenuItemController {
                 .price(request.getPrice())
                 .available(request.getAvailable())
                 .build();
-        return ResponseEntity.ok(toResponse(menuItemService.update(id, updated, image)));
+        return ResponseEntity.ok(menuItemMapper.apply(menuItemService.update(id, updated, image)));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         menuItemService.delete(id);
         return ResponseEntity.noContent().build();
-    }
-
-    private MenuItemResponse toResponse(MenuItem i) {
-        String fullImageUrl = i.getImageId() != null
-                ? "https://" + s3Buckets.getRestaurant() + ".s3." + awsRegion + ".amazonaws.com/menu-items" + i.getImageId()
-                : null;
-        return MenuItemResponse.builder()
-                .id(i.getId())
-                .name(i.getName())
-                .description(i.getDescription())
-                .price(i.getPrice())
-                .available(i.getAvailable())
-                .imageId(fullImageUrl)
-                .createdAt(i.getCreatedAt())
-                .build();
     }
 }

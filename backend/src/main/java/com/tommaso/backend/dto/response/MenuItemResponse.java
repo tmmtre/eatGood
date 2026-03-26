@@ -1,23 +1,14 @@
 package com.tommaso.backend.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class MenuItemResponse {
-    private Long id;
-    private String name;
-    private String description;
-    private BigDecimal price;
-    private Boolean available;
-    private String imageId;
-    private LocalDateTime createdAt;
-}
+public record MenuItemResponse(
+        Long id,
+        String name,
+        String description,
+        BigDecimal price,
+        Boolean available,
+        String imageUrl,
+        LocalDateTime createdAt
+) {}

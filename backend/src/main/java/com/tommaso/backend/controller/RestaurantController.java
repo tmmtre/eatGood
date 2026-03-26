@@ -2,6 +2,7 @@ package com.tommaso.backend.controller;
 
 import com.tommaso.backend.dto.request.RestaurantRequest;
 import com.tommaso.backend.dto.response.RestaurantResponse;
+import com.tommaso.backend.mapper.RestaurantMapper;
 import com.tommaso.backend.model.Restaurant;
 import com.tommaso.backend.service.RestaurantService;
 import jakarta.validation.Valid;
@@ -18,19 +19,20 @@ import java.util.List;
 public class RestaurantController {
 
     private final RestaurantService restaurantService;
+    private final RestaurantMapper restaurantMapper;
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<RestaurantResponse>> getByUser(@PathVariable String userId) {
         List<Restaurant>  restaurants = restaurantService.findByUserId(userId);
         List<RestaurantResponse> response = restaurants.stream()
-                .map(this::toResponse)
+                .map(restaurantMapper)
                 .toList();
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<RestaurantResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(toResponse(restaurantService.findById(id)));
+        return ResponseEntity.ok(restaurantMapper.apply(restaurantService.findById(id)));
     }
 
     @PostMapping("/user/{userId}")
@@ -44,7 +46,7 @@ public class RestaurantController {
                 .city(request.getCity())
                 .build();
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(toResponse(restaurantService.create(userId, restaurant)));
+                .body(restaurantMapper.apply(restaurantService.create(userId, restaurant)));
     }
 
     @PutMapping("/{id}")
@@ -57,23 +59,12 @@ public class RestaurantController {
                 .address(request.getAddress())
                 .city(request.getCity())
                 .build();
-        return ResponseEntity.ok(toResponse(restaurantService.update(id, updated)));
+        return ResponseEntity.ok(restaurantMapper.apply(restaurantService.update(id, updated)));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         restaurantService.delete(id);
         return ResponseEntity.noContent().build();
-    }
-
-    private RestaurantResponse toResponse(Restaurant r) {
-        return RestaurantResponse.builder()
-                .id(r.getId())
-                .name(r.getName())
-                .description(r.getDescription())
-                .address(r.getAddress())
-                .city(r.getCity())
-                .createdAt(r.getCreatedAt())
-                .build();
     }
 }

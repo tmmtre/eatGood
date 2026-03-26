@@ -38,7 +38,7 @@ public class MenuItemService {
 
         if (image != null && !image.isEmpty()) {
             String imageId = UUID.randomUUID().toString();
-            String key = "menu-items/" + imageId;
+            String key = "menu-items/%s/%s".formatted(sectionId, imageId);
             s3Service.putObject(s3Buckets.getRestaurant(), key, image.getBytes());
             item.setImageId(imageId);
         }
@@ -56,10 +56,19 @@ public class MenuItemService {
 
         if (image != null && !image.isEmpty()) {
             if (existing.getImageId() != null) {
-                s3Service.deleteObject(s3Buckets.getRestaurant(), "menu-items/" + existing.getImageId());
+                Long sectionId = existing.getSection().getId();
+                s3Service.deleteObject(
+                        s3Buckets.getRestaurant(),
+                        "menu-items/%s/%s".formatted(sectionId, existing.getImageId())
+                );
             }
             String imageId = UUID.randomUUID().toString();
-            s3Service.putObject(s3Buckets.getRestaurant(), "menu-items/" + imageId, image.getBytes());
+            Long sectionId = existing.getSection().getId();
+            s3Service.putObject(
+                    s3Buckets.getRestaurant(),
+                    "menu-items/%s/%s".formatted(sectionId, imageId),
+                    image.getBytes()
+            );
             existing.setImageId(imageId);
         }
 
@@ -69,7 +78,11 @@ public class MenuItemService {
     public void delete(Long id) {
         MenuItem item = findById(id);
         if (item.getImageId() != null) {
-            s3Service.deleteObject(s3Buckets.getRestaurant(), "menu-items/" + item.getImageId());
+            Long sectionId = item.getSection().getId();
+            s3Service.deleteObject(
+                    s3Buckets.getRestaurant(),
+                    "menu-items/%s/%s".formatted(sectionId, item.getImageId())
+            );
         }
         menuItemRepository.deleteById(id);
     }
