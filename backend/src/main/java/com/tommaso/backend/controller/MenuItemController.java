@@ -77,7 +77,7 @@ public class MenuItemController {
 
     private MenuItemResponse toResponse(MenuItem i) {
         String fullImageUrl = i.getImageId() != null
-                ? "https://" + s3Buckets.getRestaurant() + ".s3." + awsRegion + ".amazonaws.com/" + i.getImageId()
+                ? "https://" + s3Buckets.getRestaurant() + ".s3." + awsRegion + ".amazonaws.com/menu-items" + i.getImageId()
                 : null;
         return MenuItemResponse.builder()
                 .id(i.getId())
