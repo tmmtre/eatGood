@@ -1,27 +1,67 @@
 import { create } from 'zustand'
-import type {User} from '../types/auth'
+import { persist } from 'zustand/middleware'
+import { decodeJwt, isTokenExpired } from '../lib/jwt'
+import type { User } from '../types/auth'
 
 interface AuthState {
     user: User | null
     token: string | null
     setAuth: (user: User, token: string) => void
+    _hasHydrated: boolean
+    setHasHydrated: (v: boolean) => void
     logout: () => void
     isAuthenticated: () => boolean
+    initFromToken: () => void
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
-    user: null,
-    token: localStorage.getItem('token'),
+export const useAuthStore = create<AuthState>()(
+    persist(
+        (set, get) => ({
+            user: null,
+            token: null,
+            _hasHydrated: false,
+            setHasHydrated: (v) => set({ _hasHydrated: v }),
 
-    setAuth: (user, token) => {
-        localStorage.setItem('token', token)
-        set({ user, token })
-    },
+            setAuth: (user, token) => {
+                set({ user, token })
+            },
 
-    logout: () => {
-        localStorage.removeItem('token')
-        set({ user: null, token: null })
-    },
+            logout: () => {
+                set({ user: null, token: null })
+            },
 
-    isAuthenticated: () => !!get().token,
-}))
+            initFromToken: () => {
+                const { token, user } = get()
+                if (!token || user) return
+                if (isTokenExpired(token)) {
+                    set({ user: null, token: null })
+                    return
+                }
+                const payload = decodeJwt(token)
+                if (!payload) return
+                set({
+                    user: {
+                        id: payload.id,
+                        email: payload.sub,
+                        role: payload.role,
+                        firstName: '',
+                        lastName: '',
+                    },
+                })
+            },
+
+            isAuthenticated: () => {
+                const { token } = get()
+                if (!token) return false
+                return !isTokenExpired(token)
+            },
+        }),
+        {
+            name: 'auth-storage',
+            partialize: (state) => ({ token: state.token }),
+            onRehydrateStorage: () => (state) => {
+                state?.setHasHydrated(true)
+            },
+        }
+    )
+)

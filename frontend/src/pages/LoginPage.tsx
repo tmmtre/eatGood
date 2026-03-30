@@ -31,7 +31,9 @@ export default function LoginPage() {
                 { id: response.id, firstName: response.firstName, lastName: response.lastName, email: response.email, role: response.role },
                 response.token
             )
-            navigate('/dashboard')
+            if (response.role === 'ADMIN') navigate('/admin')
+            else if (response.role === 'OWNER') navigate('/owner')
+            else navigate('/dashboard')
         } catch {
             setError('root', { message: 'Invalid email or password' })
         }

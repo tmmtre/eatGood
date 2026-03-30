@@ -1,30 +1,42 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useAuthStore } from './store/authStore'
+import ProtectedRoute from './components/ProtectedRoute'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
-import { useAuthStore } from './store/authStore'
-import * as React from "react";
+import AdminPage from './pages/AdminPage'
+import OwnerPage from './pages/OwnerPage'
+import DashboardPage from './pages/DashboardPage'
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
-  return isAuthenticated() ? <>{children}</> : <Navigate to="/login" replace />
+function RootRedirect() {
+    const { isAuthenticated, user, _hasHydrated } = useAuthStore()
+    if (!_hasHydrated) return null
+    if (!isAuthenticated()) return <Navigate to="/login" replace />
+    if (user?.role === 'ADMIN') return <Navigate to="/admin" replace />
+    if (user?.role === 'OWNER') return <Navigate to="/owner" replace />
+    return <Navigate to="/dashboard" replace />
 }
 
 export default function App() {
-  return (
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <div className="p-8 text-2xl font-bold"></div>
-                </ProtectedRoute>
-              }
-          />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </BrowserRouter>
-  )
+    return (
+        <BrowserRouter>
+            <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+
+                <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+                    <Route path="/admin" element={<AdminPage />} />
+                </Route>
+
+                <Route element={<ProtectedRoute allowedRoles={['OWNER']} />}>
+                    <Route path="/owner" element={<OwnerPage />} />
+                </Route>
+
+                <Route element={<ProtectedRoute allowedRoles={['USER']} />}>
+                    <Route path="/dashboard" element={<DashboardPage />} />
+                </Route>
+
+                <Route path="/" element={<RootRedirect />} />
+            </Routes>
+        </BrowserRouter>
+    )
 }

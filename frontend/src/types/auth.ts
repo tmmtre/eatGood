@@ -26,3 +26,5 @@ export interface User {
     email: string
     role: string
 }
+
+export const getFullName = (user: User) => `${user.firstName} ${user.lastName}`
