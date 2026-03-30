@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,6 +33,7 @@ public class MenuSectionController {
     }
 
     @PostMapping("/restaurant/{restaurantId}")
+    @PreAuthorize("hasRole('ADMIN') or @restaurantSecurity.isOwner(#restaurantId, authentication)")
     public ResponseEntity<MenuSectionResponse> create(
             @PathVariable Long restaurantId,
             @RequestBody @Valid MenuSectionRequest request) {
@@ -43,6 +45,7 @@ public class MenuSectionController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
     public ResponseEntity<MenuSectionResponse> update(
             @PathVariable Long id,
             @RequestBody @Valid MenuSectionRequest request) {
@@ -53,6 +56,7 @@ public class MenuSectionController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
     public ResponseEntity<MenuSectionResponse> delete(@PathVariable Long id) {
         menuSectionService.delete(id);
         return ResponseEntity.noContent().build();

@@ -1,5 +1,6 @@
 package com.tommaso.backend.model;
 
+import com.tommaso.backend.model.enums.RestaurantStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,6 +34,10 @@ public class Restaurant {
 
     @Column(nullable = false)
     private String city;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private RestaurantStatus status =  RestaurantStatus.PENDING;
 
     @CreationTimestamp
     @Column(updatable = false)

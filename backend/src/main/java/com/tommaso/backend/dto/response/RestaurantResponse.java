@@ -8,5 +8,6 @@ public record RestaurantResponse(
         String description,
         String address,
         String city,
+        String status,
         LocalDateTime createdAt
 ) {}

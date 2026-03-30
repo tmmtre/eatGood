@@ -17,6 +17,7 @@ public class RestaurantMapper implements Function<Restaurant, RestaurantResponse
                 r.getDescription(),
                 r.getAddress(),
                 r.getCity(),
+                r.getStatus().name(),
                 r.getCreatedAt()
         );
     }
