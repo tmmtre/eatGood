@@ -9,5 +9,8 @@ public record RestaurantResponse(
         String address,
         String city,
         String status,
-        LocalDateTime createdAt
-) {}
+        LocalDateTime createdAt,
+        UserSummary user
+) {
+    public record UserSummary(String id, String email, String firstName, String lastName) {}
+}

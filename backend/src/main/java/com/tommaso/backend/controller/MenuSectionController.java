@@ -25,15 +25,11 @@ public class MenuSectionController {
     @GetMapping("/restaurant/{restaurantId}")
     public ResponseEntity<List<MenuSectionResponse>> getByRestaurant(
             @PathVariable Long restaurantId) {
-        List<MenuSection> sections = menuSectionService.findByRestaurantId(restaurantId);
-        List<MenuSectionResponse> response = sections.stream()
-                .map(menuSectionMapper)
-                .toList();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(menuSectionService.findByRestaurantId(restaurantId));  // ← simplified
     }
 
     @PostMapping("/restaurant/{restaurantId}")
-    @PreAuthorize("hasRole('ADMIN') or @restaurantSecurity.isOwner(#restaurantId, authentication)")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MenuSectionResponse> create(
             @PathVariable Long restaurantId,
             @RequestBody @Valid MenuSectionRequest request) {

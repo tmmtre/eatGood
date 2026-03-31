@@ -11,6 +11,12 @@ public class RestaurantMapper implements Function<Restaurant, RestaurantResponse
 
     @Override
     public RestaurantResponse apply(Restaurant r) {
+        RestaurantResponse.UserSummary user = new RestaurantResponse.UserSummary(
+                r.getUser().getId(),
+                r.getUser().getEmail(),
+                r.getUser().getFirstName(),
+                r.getUser().getLastName()
+        );
         return new RestaurantResponse(
                 r.getId(),
                 r.getName(),
@@ -18,7 +24,8 @@ public class RestaurantMapper implements Function<Restaurant, RestaurantResponse
                 r.getAddress(),
                 r.getCity(),
                 r.getStatus().name(),
-                r.getCreatedAt()
+                r.getCreatedAt(),
+                user
         );
     }
 }

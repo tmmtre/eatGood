@@ -36,7 +36,7 @@ public class MenuItemController {
     }
 
     @PostMapping(value = "/section/{sectionId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MenuItemResponse> create(
             @PathVariable Long sectionId,
             @RequestPart("item") @Valid MenuItemRequest request,

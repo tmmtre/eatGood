@@ -1,11 +1,14 @@
 package com.tommaso.backend.service;
 
+import com.tommaso.backend.dto.response.MenuSectionResponse;
+import com.tommaso.backend.mapper.MenuSectionMapper;
 import com.tommaso.backend.model.MenuSection;
 import com.tommaso.backend.model.Restaurant;
 import com.tommaso.backend.repository.MenuSectionRepository;
 import com.tommaso.backend.repository.RestaurantRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -15,9 +18,14 @@ public class MenuSectionService {
 
     private final MenuSectionRepository menuSectionRepository;
     private final RestaurantRepository restaurantRepository;
+    private final MenuSectionMapper menuSectionMapper;
 
-    public List<MenuSection> findByRestaurantId(Long restaurantId) {
-        return menuSectionRepository.findByRestaurantId(restaurantId);
+    @Transactional(readOnly = true)
+    public List<MenuSectionResponse> findByRestaurantId(Long restaurantId) {
+        return menuSectionRepository.findByRestaurantId(restaurantId)
+                .stream()
+                .map(menuSectionMapper)
+                .toList();
     }
 
     public MenuSection findById(Long id) {

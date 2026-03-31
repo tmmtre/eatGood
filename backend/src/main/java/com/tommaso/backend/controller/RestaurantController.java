@@ -32,7 +32,7 @@ public class RestaurantController {
     }
 
     @GetMapping("/user/{userId}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<RestaurantResponse>> getByUser(@PathVariable String userId) {
         return ResponseEntity.ok(
                 restaurantService.findByUserId(userId)

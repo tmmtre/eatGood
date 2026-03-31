@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import {Link, useNavigate} from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -29,7 +29,16 @@ export default function Navbar() {
                 </span>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
+                {user?.role === 'USER' && (
+                    <Link
+                        to="/register-restaurant"
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                        Register as restaurant
+                    </Link>
+                )}
+
                 <Badge variant={ROLE_VARIANT[user?.role ?? ''] ?? 'outline'}>
                     {user?.role}
                 </Badge>
