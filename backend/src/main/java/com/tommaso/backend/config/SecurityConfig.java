@@ -43,7 +43,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/restaurants/approved").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/restaurants/{id}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/sections/restaurant/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/items/section/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/items/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/reviews/item/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

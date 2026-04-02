@@ -1,5 +1,5 @@
 import api from './axios'
-import type { RestaurantResponse, MenuSectionResponse } from '../types/restaurant'
+import type { MealTime, MenuItemResponse, MenuSectionResponse, RestaurantResponse, RestaurantWithMenu, ReviewResponse, SectionCategory } from '../types/restaurant'
 
 export const createRestaurant = async (
     userId: string,
@@ -34,18 +34,40 @@ export const getMyRestaurants = async (userId: string): Promise<RestaurantRespon
     return res.data
 }
 
+export const getAllApprovedRestaurantsWithMenu = async (): Promise<RestaurantWithMenu[]> => {
+    const { data: restaurants } = await api.get<RestaurantResponse[]>('/restaurants/approved')
+
+    return await Promise.all(
+        restaurants.map(async restaurant => {
+            try {
+                const {data: sections} = await api.get<MenuSectionResponse[]>(
+                    `/sections/restaurant/${restaurant.id}`
+                )
+                return {...restaurant, sections}
+            } catch {
+                return {...restaurant, sections: []}
+            }
+        })
+    )
+}
+
+export const getMenuItem = async (id: number): Promise<MenuItemResponse> => {
+    const res = await api.get<MenuItemResponse>(`/items/${id}`)
+    return res.data
+}
+
 export const getSectionsByRestaurant = async (restaurantId: number): Promise<MenuSectionResponse[]> => {
     const res = await api.get<MenuSectionResponse[]>(`/sections/restaurant/${restaurantId}`)
     return res.data
 }
 
-export const createMenuSection = async (restaurantId: number, name: string): Promise<MenuSectionResponse> => {
-    const res = await api.post<MenuSectionResponse>(`/sections/restaurant/${restaurantId}`, { name })
+export const createMenuSection = async (restaurantId: number, name: string, category: SectionCategory): Promise<MenuSectionResponse> => {
+    const res = await api.post<MenuSectionResponse>(`/sections/restaurant/${restaurantId}`, { name, category })
     return res.data
 }
 
-export const updateMenuSection = async (id: number, name: string): Promise<MenuSectionResponse> => {
-    const res = await api.put<MenuSectionResponse>(`/sections/${id}`, { name })
+export const updateMenuSection = async (id: number, name: string, category: SectionCategory): Promise<MenuSectionResponse> => {
+    const res = await api.put<MenuSectionResponse>(`/sections/${id}`, { name, category })
     return res.data
 }
 
@@ -85,4 +107,37 @@ export const updateMenuItem = async (
 
 export const deleteMenuItem = async (id: number): Promise<void> => {
     await api.delete(`/items/${id}`)
+}
+
+export const getReviewsByItem = async (menuItemId: number): Promise<ReviewResponse[]> => {
+    const res = await api.get<ReviewResponse[]>(`/reviews/item/${menuItemId}`)
+    return res.data
+}
+
+export const createReview = async (
+    menuItemId: number,
+    data: { rating: number; comment: string; mealTime: MealTime | null; anonymous: boolean },
+    image?: File
+): Promise<ReviewResponse> => {
+    const formData = new FormData()
+    formData.append('review', new Blob([JSON.stringify(data)], { type: 'application/json' }))
+    if (image) formData.append('image', image)
+    const res = await api.post<ReviewResponse>(`/reviews/item/${menuItemId}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return res.data
+}
+
+export const getMyReviews = async (): Promise<ReviewResponse[]> => {
+    const res = await api.get<ReviewResponse[]>('/reviews/my')
+    return res.data
+}
+
+export const deleteReview = async (reviewId: number): Promise<void> => {
+    await api.delete(`/reviews/${reviewId}`)
+}
+
+export const toggleReviewLike = async (reviewId: number): Promise<ReviewResponse> => {
+    const res = await api.post<ReviewResponse>(`/reviews/${reviewId}/like`)
+    return res.data
 }

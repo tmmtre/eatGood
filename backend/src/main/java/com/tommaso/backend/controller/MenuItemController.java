@@ -25,7 +25,12 @@ public class MenuItemController {
     private final MenuItemService menuItemService;
     private final MenuItemMapper menuItemMapper;
 
-    @GetMapping("/section/{sectionId}")
+    @GetMapping("/{id}")
+    public ResponseEntity<MenuItemResponse> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(menuItemMapper.apply(menuItemService.findById(id)));
+    }
+
+@GetMapping("/section/{sectionId}")
     public ResponseEntity<List<MenuItemResponse>> getBySection(
             @PathVariable Long sectionId) {
         return ResponseEntity.ok(

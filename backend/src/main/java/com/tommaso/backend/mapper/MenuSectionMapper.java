@@ -24,6 +24,7 @@ public class MenuSectionMapper implements Function<MenuSection, MenuSectionRespo
         return new MenuSectionResponse(
                 s.getId(),
                 s.getName(),
+                s.getCategory(),
                 s.getCreatedAt(),
                 items
         );

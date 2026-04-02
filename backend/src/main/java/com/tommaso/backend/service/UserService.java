@@ -7,6 +7,7 @@ import com.tommaso.backend.s3.S3Buckets;
 import com.tommaso.backend.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -20,20 +21,24 @@ public class UserService {
     private final S3Service s3Service;
     private final S3Buckets s3Buckets;
 
+    @Transactional(readOnly = true)
     public User findById(String id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
+    @Transactional(readOnly = true)
     public User findByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
+    @Transactional(readOnly = true)
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
     }
 
+    @Transactional
     public User update(String id, UserRequest request) {
         User user = findById(id);
         boolean changes = false;
@@ -66,6 +71,7 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    @Transactional
     public void delete(String id) {
         User user = findById(id);
         if (user.getProfileImageId() != null) {
@@ -77,6 +83,7 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
+    @Transactional
     public void uploadProfileImage(String userId, MultipartFile image) throws IOException {
         User user = findById(userId);
 
@@ -97,6 +104,7 @@ public class UserService {
         userRepository.updateProfileImageId(imageId, userId);
     }
 
+    @Transactional(readOnly = true)
     public byte[] getProfileImage(String userId) {
         User user = findById(userId);
 

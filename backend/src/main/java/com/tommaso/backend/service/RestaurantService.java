@@ -8,6 +8,7 @@ import com.tommaso.backend.repository.RestaurantRepository;
 import com.tommaso.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -18,18 +19,22 @@ public class RestaurantService {
     private final RestaurantRepository restaurantRepository;
     private final UserRepository userRepository;
 
+    @Transactional(readOnly = true)
     public List<Restaurant> findByUserId(String userId) {
         return restaurantRepository.findByUserId(userId);
     }
 
+    @Transactional(readOnly = true)
     public List<Restaurant> findByStatus(RestaurantStatus status) {
         return restaurantRepository.findByStatus(status);
     }
 
+    @Transactional(readOnly = true)
     public List<Restaurant> findAll() {
         return restaurantRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Restaurant findById(Long id) {
         return restaurantRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Restaurant not found"));
@@ -43,6 +48,7 @@ public class RestaurantService {
         return  restaurantRepository.save(restaurant);
     }
 
+    @Transactional
     public Restaurant update(Long id, Restaurant updated) {
         Restaurant existing = findById(id);
         existing.setName(updated.getName());
@@ -52,6 +58,7 @@ public class RestaurantService {
         return  restaurantRepository.save(existing);
     }
 
+    @Transactional
     public Restaurant approve(Long id) {
         Restaurant restaurant = findById(id);
         restaurant.setStatus(RestaurantStatus.APPROVED);
@@ -61,6 +68,7 @@ public class RestaurantService {
         return restaurantRepository.save(restaurant);
     }
 
+    @Transactional
     public Restaurant decline(Long id) {
         Restaurant restaurant = findById(id);
         restaurant.setStatus(RestaurantStatus.REJECTED);

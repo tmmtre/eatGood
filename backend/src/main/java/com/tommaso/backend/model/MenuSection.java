@@ -1,5 +1,6 @@
 package com.tommaso.backend.model;
 
+import com.tommaso.backend.model.enums.SectionCategory;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,6 +26,10 @@ public class MenuSection {
 
     @Column(nullable = false)
     private String name;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "category")
+    private SectionCategory category;
 
     @CreationTimestamp
     @Column(updatable = false)

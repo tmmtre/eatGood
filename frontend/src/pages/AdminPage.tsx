@@ -18,7 +18,7 @@ export default function AdminPage() {
     useEffect(() => {
         getPendingRestaurants()
             .then(setPending)
-            .catch(() => {})
+            .catch(console.error)
             .finally(() => setLoading(false))
     }, [])
 
@@ -36,7 +36,8 @@ export default function AdminPage() {
         try {
             const data = await getSectionsByRestaurant(id)
             setSections(prev => ({ ...prev, [id]: data }))
-        } catch {
+        } catch (e) {
+            console.error(e)
         } finally {
             setSectionsLoading(prev => ({ ...prev, [id]: false }))
         }
@@ -48,7 +49,8 @@ export default function AdminPage() {
             await approveRestaurant(id)
             setPending(prev => prev.filter(r => r.id !== id))
             if (expandedId === id) setExpandedId(null)
-        } catch {
+        } catch (e) {
+            console.error(e)
         } finally {
             setActionId(null)
         }
@@ -60,7 +62,8 @@ export default function AdminPage() {
             await rejectRestaurant(id)
             setPending(prev => prev.filter(r => r.id !== id))
             if (expandedId === id) setExpandedId(null)
-        } catch {
+        } catch (e) {
+            console.error(e)
         } finally {
             setActionId(null)
         }
@@ -70,7 +73,7 @@ export default function AdminPage() {
         <div className="min-h-screen bg-background text-foreground">
             <Navbar />
 
-            <main className="max-w-5xl mx-auto px-6 pt-24 pb-12">
+            <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-24 pb-12">
                 <div className="mb-8">
                     <p className="text-xs font-mono text-destructive uppercase tracking-widest mb-2">Admin Panel</p>
                     <h1 className="text-3xl font-semibold tracking-tight">System Control</h1>
@@ -123,18 +126,15 @@ export default function AdminPage() {
                                     </CardHeader>
 
                                     <CardContent className="pt-0 space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <div className="text-xs text-muted-foreground">
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-3" onClick={e => e.stopPropagation()}>
+                                            <div className="text-xs text-muted-foreground flex-1 min-w-0">
                                                 <span className="text-foreground font-medium">{r.user?.email}</span>
                                                 {' · '}
-                                                Requested by {r.user?.firstName} {r.user?.lastName}
+                                                {r.user?.firstName} {r.user?.lastName}
                                                 {' · '}
                                                 {new Date(r.createdAt).toLocaleDateString()}
                                             </div>
-                                            <div
-                                                className="flex gap-2"
-                                                onClick={e => e.stopPropagation()}
-                                            >
+                                            <div className="flex gap-2 shrink-0">
                                                 <Button
                                                     size="sm"
                                                     variant="outline"

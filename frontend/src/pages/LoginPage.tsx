@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { useNavigate, Link } from 'react-router-dom'
 import { login } from '../api/authApi.ts'
 import { useAuthStore } from '../store/authStore'
+import { getRoleBasedPath } from '../lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -31,16 +32,14 @@ export default function LoginPage() {
                 { id: response.id, firstName: response.firstName, lastName: response.lastName, email: response.email, role: response.role },
                 response.token
             )
-            if (response.role === 'ADMIN') navigate('/admin')
-            else if (response.role === 'OWNER') navigate('/owner')
-            else navigate('/dashboard')
+            navigate(getRoleBasedPath(response.role))
         } catch {
             setError('root', { message: 'Invalid email or password' })
         }
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
             <Card className="w-full max-w-md">
                 <CardHeader className="text-center">
                     <CardTitle className="text-2xl">Welcome back</CardTitle>

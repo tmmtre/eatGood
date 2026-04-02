@@ -8,6 +8,7 @@ import com.tommaso.backend.s3.S3Buckets;
 import com.tommaso.backend.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -23,16 +24,18 @@ public class MenuItemService {
     private final S3Service s3Service;
     private final S3Buckets s3Buckets;
 
+    @Transactional(readOnly = true)
     public List<MenuItem> findBySectionId(Long sectionId) {
         return menuItemRepository.findBySectionId(sectionId);
     }
 
+    @Transactional(readOnly = true)
     public MenuItem findById(Long id) {
         return menuItemRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Menu Item not found"));
     }
 
-    public MenuItem create(Long sectionId, MenuItem item, MultipartFile image) throws IOException {
+public MenuItem create(Long sectionId, MenuItem item, MultipartFile image) throws IOException {
         MenuSection section = menuSectionRepository.findById(sectionId)
                 .orElseThrow(() -> new RuntimeException("Menu Section not found"));
 
@@ -47,6 +50,7 @@ public class MenuItemService {
         return menuItemRepository.save(item);
     }
 
+    @Transactional
     public MenuItem update(Long id, MenuItem updated, MultipartFile image) throws IOException {
         MenuItem existing = findById(id);
         existing.setName(updated.getName());
@@ -75,6 +79,7 @@ public class MenuItemService {
         return menuItemRepository.save(existing);
     }
 
+    @Transactional
     public void delete(Long id) {
         MenuItem item = findById(id);
         if (item.getImageId() != null) {

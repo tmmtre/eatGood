@@ -10,5 +10,7 @@ public record MenuItemResponse(
         BigDecimal price,
         Boolean available,
         String imageUrl,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        Double averageRating,
+        Long reviewCount
 ) {}

@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useAuthStore } from '@/store/authStore'
 import { createRestaurant, createMenuSection, createMenuItem, getMyRestaurants } from '@/api/restaurantApi'
-import type { RestaurantResponse } from '@/types/restaurant'
+import type { RestaurantResponse, SectionCategory } from '@/types/restaurant'
+import { SECTION_CATEGORIES, CATEGORY_LABELS } from '@/types/restaurant'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,6 +15,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import Navbar from '@/components/Navbar'
+import type { Control, UseFormRegister, FieldErrors } from 'react-hook-form'
+
+const SELECT_CLS = 'h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring w-full'
 
 const menuItemSchema = z.object({
     name: z.string().min(1, 'Required'),
@@ -24,8 +28,11 @@ const menuItemSchema = z.object({
         .refine(v => !isNaN(Number(v)) && Number(v) > 0, 'Must be a valid price'),
 })
 
+const SECTION_CATEGORY_VALUES = SECTION_CATEGORIES as [SectionCategory, ...SectionCategory[]]
+
 const menuSectionSchema = z.object({
     name: z.string().min(1, 'Section name required'),
+    category: z.enum(SECTION_CATEGORY_VALUES),
     items: z.array(menuItemSchema).min(1, 'Add at least one item'),
 })
 
@@ -62,6 +69,119 @@ const STATUS_MESSAGE: Record<string, { title: string; description: string }> = {
     },
 }
 
+function SectionBlock({
+    sectionIndex: si,
+    control,
+    register,
+    errors,
+    removable,
+    onRemove,
+}: {
+    sectionIndex: number
+    control: Control<FormData>
+    register: UseFormRegister<FormData>
+    errors: FieldErrors<FormData>
+    removable: boolean
+    onRemove: () => void
+}) {
+    const { fields: itemFields, append: addItem, remove: removeItem } = useFieldArray({
+        control,
+        name: `sections.${si}.items`,
+    })
+
+    return (
+        <Card>
+            <CardContent className="pt-5 space-y-4">
+                <div className="flex flex-col sm:flex-row items-start gap-3">
+                    <div className="flex-1 space-y-1 w-full sm:w-auto">
+                        <Label>Section name *</Label>
+                        <Input placeholder="e.g. Grilled dishes" {...register(`sections.${si}.name`)} />
+                        {errors.sections?.[si]?.name && (
+                            <p className="text-xs text-destructive">{errors.sections[si]?.name?.message}</p>
+                        )}
+                    </div>
+                    <div className="space-y-1 w-full sm:w-auto">
+                        <Label>Category</Label>
+                        <select className={SELECT_CLS} {...register(`sections.${si}.category`)}>
+                            {SECTION_CATEGORIES.map(c => (
+                                <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>
+                            ))}
+                        </select>
+                    </div>
+                    {removable && (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="sm:mt-5 text-destructive hover:text-destructive self-end sm:self-auto"
+                            onClick={onRemove}
+                        >
+                            Remove
+                        </Button>
+                    )}
+                </div>
+
+                <Separator />
+
+                <div className="space-y-3">
+                    {itemFields.map((item, ii) => (
+                        <div key={item.id} className="flex flex-col sm:grid sm:grid-cols-12 gap-2 items-start">
+                            <div className="w-full sm:col-span-4 space-y-1">
+                                <Label className="text-xs">Name *</Label>
+                                <Input placeholder="Dish name" {...register(`sections.${si}.items.${ii}.name`)} />
+                                {errors.sections?.[si]?.items?.[ii]?.name && (
+                                    <p className="text-xs text-destructive">
+                                        {errors.sections[si]?.items?.[ii]?.name?.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="w-full sm:col-span-5 space-y-1">
+                                <Label className="text-xs">Description</Label>
+                                <Input placeholder="Optional" {...register(`sections.${si}.items.${ii}.description`)} />
+                            </div>
+
+                            <div className="w-full sm:col-span-2 space-y-1">
+                                <Label className="text-xs">Price *</Label>
+                                <Input placeholder="9.90" {...register(`sections.${si}.items.${ii}.price`)} />
+                                {errors.sections?.[si]?.items?.[ii]?.price && (
+                                    <p className="text-xs text-destructive">
+                                        {errors.sections[si]?.items?.[ii]?.price?.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="sm:col-span-1 self-end">
+                                {itemFields.length > 1 && (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-muted-foreground hover:text-destructive px-2"
+                                        onClick={() => removeItem(ii)}
+                                    >
+                                        ✕
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground"
+                    onClick={() => addItem({ name: '', description: '', price: '' })}
+                >
+                    + Add item
+                </Button>
+            </CardContent>
+        </Card>
+    )
+}
+
 function ExistingRequestScreen({ restaurant }: { restaurant: RestaurantResponse }) {
     const navigate = useNavigate()
     const msg = STATUS_MESSAGE[restaurant.status]
@@ -69,7 +189,7 @@ function ExistingRequestScreen({ restaurant }: { restaurant: RestaurantResponse 
     return (
         <div className="min-h-screen bg-background text-foreground">
             <Navbar />
-            <main className="max-w-lg mx-auto px-6 pt-24 pb-16">
+            <main className="max-w-lg mx-auto px-4 sm:px-6 pt-24 pb-16">
                 <Card>
                     <CardHeader>
                         <div className="flex items-center justify-between mb-1">
@@ -129,7 +249,7 @@ export default function RegisterRestaurantPage() {
                     setExistingRestaurant(restaurants[0])
                 }
             })
-            .catch(() => {})
+            .catch(console.error)
             .finally(() => setChecking(false))
     }, [user])
 
@@ -140,7 +260,7 @@ export default function RegisterRestaurantPage() {
             description: '',
             address: '',
             city: '',
-            sections: [{ name: '', items: [{ name: '', description: '', price: '' }] }],
+            sections: [{ name: '', category: 'OTHER' as SectionCategory, items: [{ name: '', description: '', price: '' }] }],
         },
         mode: 'onChange',
     })
@@ -183,7 +303,7 @@ export default function RegisterRestaurantPage() {
             })
 
             for (const section of data.sections) {
-                const createdSection = await createMenuSection(restaurant.id, section.name)
+                const createdSection = await createMenuSection(restaurant.id, section.name, section.category)
                 for (const item of section.items) {
                     await createMenuItem(createdSection.id, {
                         name: item.name,
@@ -206,7 +326,7 @@ export default function RegisterRestaurantPage() {
         return (
             <div className="min-h-screen bg-background text-foreground">
                 <Navbar />
-                <main className="max-w-lg mx-auto px-6 pt-24">
+                <main className="max-w-lg mx-auto px-4 sm:px-6 pt-24">
                     <p className="text-sm text-muted-foreground">Checking your account...</p>
                 </main>
             </div>
@@ -221,22 +341,25 @@ export default function RegisterRestaurantPage() {
         <div className="min-h-screen bg-background text-foreground">
             <Navbar />
 
-            <main className="max-w-2xl mx-auto px-6 pt-24 pb-16">
-                <div className="flex items-center gap-2 mb-8">
+            <main className="max-w-2xl mx-auto px-4 sm:px-6 pt-24 pb-16">
+                <div className="flex items-center gap-1 sm:gap-2 mb-8">
                     {STEPS.map((label, i) => (
-                        <div key={i} className="flex items-center gap-2">
+                        <div key={i} className="flex items-center gap-1 sm:gap-2">
                             <div
-                                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold transition-colors
+                                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold transition-colors shrink-0
                                     ${i <= step ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}
                                     ${i === step ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}
                                 `}
                             >
                                 {i < step ? '✓' : i + 1}
                             </div>
-                            <span className={`text-sm ${i === step ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+                            <span className={`text-xs sm:text-sm hidden sm:inline ${i === step ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
                                 {label}
                             </span>
-                            {i < STEPS.length - 1 && <div className="w-8 h-px bg-border mx-1" />}
+                            <span className={`text-xs sm:hidden ${i === step ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+                                {i === step ? label : ''}
+                            </span>
+                            {i < STEPS.length - 1 && <div className="w-4 sm:w-8 h-px bg-border mx-0.5 sm:mx-1" />}
                         </div>
                     ))}
                 </div>
@@ -260,7 +383,7 @@ export default function RegisterRestaurantPage() {
                                     <Textarea placeholder="A short description..." rows={3} {...register('description')} />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div className="space-y-1">
                                         <Label>Address *</Label>
                                         <Input placeholder="Via Roma 1" {...register('address')} />
@@ -301,7 +424,7 @@ export default function RegisterRestaurantPage() {
                                 type="button"
                                 variant="outline"
                                 className="w-full"
-                                onClick={() => addSection({ name: '', items: [{ name: '', description: '', price: '' }] })}
+                                onClick={() => addSection({ name: '', category: 'OTHER' as SectionCategory, items: [{ name: '', description: '', price: '' }] })}
                             >
                                 + Add section
                             </Button>
@@ -331,7 +454,10 @@ export default function RegisterRestaurantPage() {
                                     <div className="space-y-4">
                                         {values.sections?.map((section, si) => (
                                             <div key={si}>
-                                                <p className="font-medium text-sm mb-2">{section.name}</p>
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <p className="font-medium text-sm">{section.name}</p>
+                                                    <span className="text-xs text-muted-foreground">{CATEGORY_LABELS[section.category]}</span>
+                                                </div>
                                                 <div className="space-y-1 pl-3 border-l border-border">
                                                     {section.items?.map((item, ii) => (
                                                         <div key={ii} className="flex justify-between text-sm">
@@ -380,113 +506,5 @@ export default function RegisterRestaurantPage() {
                 </form>
             </main>
         </div>
-    )
-}
-
-import { useFieldArray as useFA } from 'react-hook-form'
-import type { Control, UseFormRegister, FieldErrors } from 'react-hook-form'
-
-function SectionBlock({
-                          sectionIndex: si,
-                          control,
-                          register,
-                          errors,
-                          removable,
-                          onRemove,
-                      }: {
-    sectionIndex: number
-    control: Control<FormData>
-    register: UseFormRegister<FormData>
-    errors: FieldErrors<FormData>
-    removable: boolean
-    onRemove: () => void
-}) {
-    const { fields: itemFields, append: addItem, remove: removeItem } = useFA({
-        control,
-        name: `sections.${si}.items`,
-    })
-
-    return (
-        <Card>
-            <CardContent className="pt-5 space-y-4">
-                <div className="flex items-center gap-3">
-                    <div className="flex-1 space-y-1">
-                        <Label>Section name *</Label>
-                        <Input placeholder="e.g. Starters" {...register(`sections.${si}.name`)} />
-                        {errors.sections?.[si]?.name && (
-                            <p className="text-xs text-destructive">{errors.sections[si]?.name?.message}</p>
-                        )}
-                    </div>
-                    {removable && (
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="mt-5 text-destructive hover:text-destructive"
-                            onClick={onRemove}
-                        >
-                            Remove
-                        </Button>
-                    )}
-                </div>
-
-                <Separator />
-
-                <div className="space-y-3">
-                    {itemFields.map((item, ii) => (
-                        <div key={item.id} className="grid grid-cols-12 gap-2 items-start">
-                            <div className="col-span-4 space-y-1">
-                                {ii === 0 && <Label className="text-xs">Name *</Label>}
-                                <Input placeholder="Dish name" {...register(`sections.${si}.items.${ii}.name`)} />
-                                {errors.sections?.[si]?.items?.[ii]?.name && (
-                                    <p className="text-xs text-destructive">
-                                        {errors.sections[si]?.items?.[ii]?.name?.message}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div className="col-span-5 space-y-1">
-                                {ii === 0 && <Label className="text-xs">Description</Label>}
-                                <Input placeholder="Optional" {...register(`sections.${si}.items.${ii}.description`)} />
-                            </div>
-
-                            <div className="col-span-2 space-y-1">
-                                {ii === 0 && <Label className="text-xs">Price *</Label>}
-                                <Input placeholder="9.90" {...register(`sections.${si}.items.${ii}.price`)} />
-                                {errors.sections?.[si]?.items?.[ii]?.price && (
-                                    <p className="text-xs text-destructive">
-                                        {errors.sections[si]?.items?.[ii]?.price?.message}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div className={`col-span-1 ${ii === 0 ? 'mt-5' : ''}`}>
-                                {itemFields.length > 1 && (
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        className="text-muted-foreground hover:text-destructive px-2"
-                                        onClick={() => removeItem(ii)}
-                                    >
-                                        ✕
-                                    </Button>
-                                )}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="text-muted-foreground"
-                    onClick={() => addItem({ name: '', description: '', price: '' })}
-                >
-                    + Add item
-                </Button>
-            </CardContent>
-        </Card>
     )
 }

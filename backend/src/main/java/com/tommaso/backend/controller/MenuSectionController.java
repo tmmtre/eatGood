@@ -35,6 +35,7 @@ public class MenuSectionController {
             @RequestBody @Valid MenuSectionRequest request) {
         MenuSection section = MenuSection.builder()
                 .name(request.getName())
+                .category(request.getCategory())
                 .build();
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(menuSectionMapper.apply(menuSectionService.create(restaurantId, section)));
@@ -47,6 +48,7 @@ public class MenuSectionController {
             @RequestBody @Valid MenuSectionRequest request) {
         MenuSection section = MenuSection.builder()
                 .name(request.getName())
+                .category(request.getCategory())
                 .build();
         return ResponseEntity.ok(menuSectionMapper.apply(menuSectionService.update(id, section)));
     }

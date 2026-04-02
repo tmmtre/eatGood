@@ -28,6 +28,7 @@ public class MenuSectionService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public MenuSection findById(Long id) {
         return menuSectionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("MenuSection not found"));
@@ -40,9 +41,11 @@ public class MenuSectionService {
         return menuSectionRepository.save(section);
     }
 
+    @Transactional
     public MenuSection update(Long id, MenuSection updated) {
         MenuSection existing = findById(id);
         existing.setName(updated.getName());
+        existing.setCategory(updated.getCategory());
         return menuSectionRepository.save(existing);
     }
 
