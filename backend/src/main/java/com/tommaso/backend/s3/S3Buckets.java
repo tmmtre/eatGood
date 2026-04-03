@@ -12,4 +12,5 @@ import org.springframework.context.annotation.Configuration;
 public class S3Buckets {
 
     private String restaurant;
+    private String profile;
 }

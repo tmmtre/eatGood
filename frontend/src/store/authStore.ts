@@ -7,6 +7,7 @@ interface AuthState {
     user: User | null
     token: string | null
     setAuth: (user: User, token: string) => void
+    updateUser: (partial: Partial<User>) => void
     _hasHydrated: boolean
     setHasHydrated: (v: boolean) => void
     logout: () => void
@@ -24,6 +25,11 @@ export const useAuthStore = create<AuthState>()(
 
             setAuth: (user, token) => {
                 set({ user, token })
+            },
+
+            updateUser: (partial) => {
+                const { user } = get()
+                if (user) set({ user: { ...user, ...partial } })
             },
 
             logout: () => {

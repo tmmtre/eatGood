@@ -100,15 +100,16 @@ public class ReviewService {
                 .user(user)
                 .build();
 
-        if (image != null && !image.isEmpty()) {
-            String imageId = UUID.randomUUID().toString();
-            s3Service.putObject(
-                    s3Buckets.getRestaurant(),
-                    "reviews/%s/%s".formatted(menuItemId, imageId),
-                    image.getBytes()
-            );
-            review.setImageId(imageId);
+        if (image == null || image.isEmpty()) {
+            throw new IllegalArgumentException("A photo is required for reviews");
         }
+        String imageId = UUID.randomUUID().toString();
+        s3Service.putObject(
+                s3Buckets.getRestaurant(),
+                "reviews/%s/%s".formatted(menuItemId, imageId),
+                image.getBytes()
+        );
+        review.setImageId(imageId);
 
         return reviewMapper.apply(reviewRepository.save(review));
     }

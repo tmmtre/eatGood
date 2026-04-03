@@ -1,5 +1,6 @@
 package com.tommaso.backend.controller;
 
+import com.tommaso.backend.dto.request.ChangePasswordRequest;
 import com.tommaso.backend.dto.request.UserRequest;
 import com.tommaso.backend.dto.response.UserResponse;
 import com.tommaso.backend.mapper.UserMapper;
@@ -45,6 +46,14 @@ public class UserController {
             @PathVariable String id,
             @RequestParam("image") MultipartFile image) throws IOException {
         userService.uploadProfileImage(id, image);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/password")
+    public ResponseEntity<Void> changePassword(
+            @PathVariable String id,
+            @RequestBody @Valid ChangePasswordRequest request) {
+        userService.changePassword(id, request);
         return ResponseEntity.ok().build();
     }
 

@@ -2,6 +2,8 @@ package com.tommaso.backend.filter;
 
 import com.tommaso.backend.service.JwtService;
 import com.tommaso.backend.service.UserPrincipalService;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,7 +40,16 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         final String jwt = authHeader.substring(7);
-        final String email = jwtService.extractEmail(jwt);
+        final String email;
+        try {
+            email = jwtService.extractEmail(jwt);
+        } catch (ExpiredJwtException e) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token expired");
+            return;
+        } catch (JwtException e) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token");
+            return;
+        }
 
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userPrincipalService.loadUserByUsername(email);

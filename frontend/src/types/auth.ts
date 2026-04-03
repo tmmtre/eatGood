@@ -25,6 +25,7 @@ export interface User {
     lastName: string
     email: string
     role: string
+    profileImageId?: string | null
 }
 
 export const getFullName = (user: User) => `${user.firstName} ${user.lastName}`

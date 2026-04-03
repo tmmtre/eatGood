@@ -2,8 +2,8 @@ package com.tommaso.backend.mapper;
 
 import com.tommaso.backend.dto.response.UserResponse;
 import com.tommaso.backend.model.User;
+import com.tommaso.backend.repository.ReviewLikeRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.function.Function;
@@ -12,8 +12,7 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public class UserMapper implements Function<User, UserResponse> {
 
-    @Value("${aws.region}")
-    private String awsRegion;
+    private final ReviewLikeRepository reviewLikeRepository;
 
     @Override
     public UserResponse apply(User user) {
@@ -24,9 +23,11 @@ public class UserMapper implements Function<User, UserResponse> {
                 user.getEmail(),
                 user.getRole().name(),
                 user.getEmailVerified(),
+                user.getProfileImageId(),
                 user.getProfileImageId() != null
                         ? "/api/v1/users/" + user.getId() + "/profile-image"
                         : null,
+                reviewLikeRepository.countByReviewUserId(user.getId()),
                 user.getCreatedAt()
         );
     }

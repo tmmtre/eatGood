@@ -1,11 +1,13 @@
 package com.tommaso.backend.service;
 
+import com.tommaso.backend.dto.request.ChangePasswordRequest;
 import com.tommaso.backend.dto.request.UserRequest;
 import com.tommaso.backend.model.User;
 import com.tommaso.backend.repository.UserRepository;
 import com.tommaso.backend.s3.S3Buckets;
 import com.tommaso.backend.s3.S3Service;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,6 +22,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final S3Service s3Service;
     private final S3Buckets s3Buckets;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     public User findById(String id) {
@@ -72,11 +75,21 @@ public class UserService {
     }
 
     @Transactional
+    public void changePassword(String userId, ChangePasswordRequest request) {
+        User user = findById(userId);
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new RuntimeException("Current password is incorrect");
+        }
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+    }
+
+    @Transactional
     public void delete(String id) {
         User user = findById(id);
         if (user.getProfileImageId() != null) {
             s3Service.deleteObject(
-                    s3Buckets.getRestaurant(),
+                    s3Buckets.getProfile(),
                     "profile-images/%s/%s".formatted(id, user.getProfileImageId())
             );
         }
@@ -89,14 +102,14 @@ public class UserService {
 
         if (user.getProfileImageId() != null) {
             s3Service.deleteObject(
-                    s3Buckets.getRestaurant(),
+                    s3Buckets.getProfile(),
                     "profile-images/%s/%s".formatted(userId, user.getProfileImageId())
             );
         }
 
         String imageId = UUID.randomUUID().toString();
         s3Service.putObject(
-                s3Buckets.getRestaurant(),
+                s3Buckets.getProfile(),
                 "profile-images/%s/%s".formatted(userId, imageId),
                 image.getBytes()
         );
@@ -113,7 +126,7 @@ public class UserService {
         }
 
         return s3Service.getObject(
-                s3Buckets.getRestaurant(),
+                s3Buckets.getProfile(),
                 "profile-images/%s/%s".formatted(userId, user.getProfileImageId())
         );
     }

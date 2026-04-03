@@ -10,6 +10,7 @@ import DashboardPage from './pages/DashboardPage'
 import RegisterRestaurantPage from './pages/RegisterRestaurantPage'
 import ItemPage from './pages/ItemPage'
 import HistoryPage from './pages/HistoryPage'
+import ProfilePage from './pages/ProfilePage'
 
 function RootRedirect() {
     const { isAuthenticated, user, _hasHydrated } = useAuthStore()
@@ -38,6 +39,10 @@ export default function App() {
                     <Route path="/register-restaurant" element={<RegisterRestaurantPage />} />
                     <Route path="/item/:id" element={<ItemPage />} />
                     <Route path="/history" element={<HistoryPage />} />
+                </Route>
+
+                <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'OWNER', 'USER']} />}>
+                    <Route path="/profile" element={<ProfilePage />} />
                 </Route>
 
                 <Route path="/" element={<RootRedirect />} />

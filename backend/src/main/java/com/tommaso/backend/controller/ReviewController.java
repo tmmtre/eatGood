@@ -49,7 +49,7 @@ public class ReviewController {
     public ResponseEntity<ReviewResponse> create(
             @PathVariable Long menuItemId,
             @RequestPart("review") @Valid ReviewRequest request,
-            @RequestPart(value = "image", required = false) MultipartFile image,
+            @RequestPart(value = "image") MultipartFile image,
             Authentication authentication) throws IOException {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(reviewService.create(menuItemId, request, image, authentication));

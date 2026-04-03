@@ -41,6 +41,7 @@ export default function ReviewModal({ item, restaurantName, onClose, onReviewAdd
 
     const handleSubmit = async () => {
         if (rating === 0) { setSubmitError('Please select a star rating.'); return }
+        if (!image) { setSubmitError('Please add a photo.'); return }
         setSubmitError('')
         setSubmitting(true)
         try {
@@ -131,29 +132,38 @@ export default function ReviewModal({ item, restaurantName, onClose, onReviewAdd
                                 rows={3}
                                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
                             />
-                            <div className="flex items-center gap-3">
-                                <label className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
-                                    <input
-                                        ref={fileRef}
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={e => setImage(e.target.files?.[0] ?? null)}
-                                    />
-                                    {image ? image.name : '+ Add photo'}
-                                </label>
+                            <div className="space-y-2">
                                 {image && (
-                                    <button
-                                        type="button"
-                                        className="text-xs text-muted-foreground hover:text-destructive"
-                                        onClick={() => { setImage(null); if (fileRef.current) fileRef.current.value = '' }}
-                                    >
-                                        Remove
-                                    </button>
+                                    <img
+                                        src={URL.createObjectURL(image)}
+                                        alt="Preview"
+                                        className="w-full max-h-48 object-cover rounded-lg"
+                                    />
                                 )}
+                                <div className="flex items-center gap-3">
+                                    <label className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
+                                        <input
+                                            ref={fileRef}
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={e => setImage(e.target.files?.[0] ?? null)}
+                                        />
+                                        {image ? 'Change photo' : '+ Add photo (required)'}
+                                    </label>
+                                    {image && (
+                                        <button
+                                            type="button"
+                                            className="text-xs text-muted-foreground hover:text-destructive"
+                                            onClick={() => { setImage(null); if (fileRef.current) fileRef.current.value = '' }}
+                                        >
+                                            Remove
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                             {submitError && <p className="text-xs text-destructive">{submitError}</p>}
-                            <Button size="sm" disabled={submitting || rating === 0} onClick={handleSubmit}>
+                            <Button size="sm" disabled={submitting || rating === 0 || !image} onClick={handleSubmit}>
                                 {submitting ? 'Submitting...' : 'Submit review'}
                             </Button>
                             <Separator />

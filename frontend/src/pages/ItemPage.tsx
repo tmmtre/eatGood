@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import Navbar from '@/components/Navbar'
+import BottomNav from '@/components/BottomNav'
 import StarRating from '@/components/StarRating'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -64,6 +65,7 @@ export default function ItemPage() {
 
     const handleSubmit = async () => {
         if (rating === 0) { setSubmitError('Please select a star rating.'); return }
+        if (!image) { setSubmitError('Please add a photo.'); return }
         setSubmitError('')
         setSubmitting(true)
         try {
@@ -111,7 +113,8 @@ export default function ItemPage() {
         return (
             <div className="min-h-screen bg-background text-foreground">
                 <Navbar />
-                <main className="max-w-3xl mx-auto px-4 sm:px-6 pt-24 pb-12">
+                <BottomNav />
+                <main className="max-w-3xl mx-auto px-4 sm:px-6 pt-24 pb-24">
                     <div className="animate-pulse space-y-4">
                         <div className="h-6 bg-muted rounded w-1/2" />
                         <div className="h-4 bg-muted rounded w-1/4" />
@@ -126,7 +129,8 @@ export default function ItemPage() {
         return (
             <div className="min-h-screen bg-background text-foreground">
                 <Navbar />
-                <main className="max-w-3xl mx-auto px-4 sm:px-6 pt-24 pb-12">
+                <BottomNav />
+                <main className="max-w-3xl mx-auto px-4 sm:px-6 pt-24 pb-24">
                     <Card>
                         <CardContent className="py-12 text-center text-sm text-destructive">
                             Item not found.
@@ -140,8 +144,9 @@ export default function ItemPage() {
     return (
         <div className="min-h-screen bg-background text-foreground">
             <Navbar />
+            <BottomNav />
 
-            <main className="max-w-3xl mx-auto px-4 sm:px-6 pt-24 pb-12 space-y-8">
+            <main className="max-w-3xl mx-auto px-4 sm:px-6 pt-24 pb-24 space-y-8">
                 {/* Back */}
                 <button
                     onClick={() => navigate(-1)}
@@ -233,7 +238,7 @@ export default function ItemPage() {
                                             className="hidden"
                                             onChange={e => setImage(e.target.files?.[0] ?? null)}
                                         />
-                                        {image ? 'Change photo' : '+ Add photo'}
+                                        {image ? 'Change photo' : '+ Add photo (required)'}
                                     </label>
                                     {image && (
                                         <button
@@ -256,7 +261,7 @@ export default function ItemPage() {
                                 <span className="text-xs text-muted-foreground">Post anonymously</span>
                             </label>
                             {submitError && <p className="text-xs text-destructive">{submitError}</p>}
-                            <Button size="sm" disabled={submitting || rating === 0} onClick={handleSubmit}>
+                            <Button size="sm" disabled={submitting || rating === 0 || !image} onClick={handleSubmit}>
                                 {submitting ? 'Submitting...' : 'Submit review'}
                             </Button>
                         </div>

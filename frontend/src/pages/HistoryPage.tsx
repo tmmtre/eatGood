@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Navbar from '@/components/Navbar'
+import BottomNav from '@/components/BottomNav'
 import StarRating from '@/components/StarRating'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -90,6 +91,7 @@ function AddModal({ onClose, onAdded }: AddModalProps) {
         if (!selectedItem) return
         if (rating === 0) { setSubmitError('Please select a star rating.'); return }
         if (!mealTime) { setSubmitError('Please select morning, lunch or dinner.'); return }
+        if (!image) { setSubmitError('Please add a photo.'); return }
         setSubmitError('')
         setSubmitting(true)
         try {
@@ -226,7 +228,7 @@ function AddModal({ onClose, onAdded }: AddModalProps) {
                                     <label className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
                                         <input ref={fileRef} type="file" accept="image/*" className="hidden"
                                             onChange={e => setImage(e.target.files?.[0] ?? null)} />
-                                        {image ? 'Change photo' : '+ Add photo'}
+                                        {image ? 'Change photo' : '+ Add photo (required)'}
                                     </label>
                                     {image && (
                                         <button type="button" className="text-xs text-muted-foreground hover:text-destructive"
@@ -249,7 +251,7 @@ function AddModal({ onClose, onAdded }: AddModalProps) {
 
                             {submitError && <p className="text-xs text-destructive">{submitError}</p>}
 
-                            <Button size="sm" disabled={submitting || rating === 0 || !mealTime} onClick={handleSubmit}>
+                            <Button size="sm" disabled={submitting || rating === 0 || !mealTime || !image} onClick={handleSubmit}>
                                 {submitting ? 'Saving...' : 'Save to history'}
                             </Button>
                         </div>
@@ -321,12 +323,14 @@ export default function HistoryPage() {
     return (
         <div className="min-h-screen bg-background text-foreground">
             <Navbar />
+            <BottomNav />
 
-            <main className="max-w-3xl mx-auto px-4 sm:px-6 pt-24 pb-12 space-y-8">
+            <main className="max-w-3xl mx-auto px-4 sm:px-6 pt-24 pb-24 space-y-8">
                 <div className="flex items-end justify-between">
                     <div>
                         <p className="text-xs font-mono text-green-500 uppercase tracking-widest mb-2">History</p>
                         <h1 className="text-3xl font-semibold tracking-tight">What you ate</h1>
+                        <p className="text-muted-foreground mt-1 text-sm">Your personal food diary, one meal at a time.</p>
                     </div>
                     <Button size="sm" onClick={() => setShowAdd(true)}>+ Add</Button>
                 </div>

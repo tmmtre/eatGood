@@ -9,6 +9,8 @@ public record UserResponse(
         String email,
         String role,
         Boolean emailVerified,
+        String profileImageId,
         String profileImageUrl,
+        long totalLikesReceived,
         LocalDateTime createdAt
 ) {}

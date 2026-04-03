@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import Navbar from '@/components/Navbar'
+import BottomNav from '@/components/BottomNav'
 import type { Control, UseFormRegister, FieldErrors } from 'react-hook-form'
 
 const SELECT_CLS = 'h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring w-full'
@@ -189,7 +190,8 @@ function ExistingRequestScreen({ restaurant }: { restaurant: RestaurantResponse 
     return (
         <div className="min-h-screen bg-background text-foreground">
             <Navbar />
-            <main className="max-w-lg mx-auto px-4 sm:px-6 pt-24 pb-16">
+            <BottomNav />
+            <main className="max-w-lg mx-auto px-4 sm:px-6 pt-24 pb-24">
                 <Card>
                     <CardHeader>
                         <div className="flex items-center justify-between mb-1">
@@ -326,6 +328,7 @@ export default function RegisterRestaurantPage() {
         return (
             <div className="min-h-screen bg-background text-foreground">
                 <Navbar />
+                <BottomNav />
                 <main className="max-w-lg mx-auto px-4 sm:px-6 pt-24">
                     <p className="text-sm text-muted-foreground">Checking your account...</p>
                 </main>
@@ -340,11 +343,20 @@ export default function RegisterRestaurantPage() {
     return (
         <div className="min-h-screen bg-background text-foreground">
             <Navbar />
+            <BottomNav />
 
-            <main className="max-w-2xl mx-auto px-4 sm:px-6 pt-24 pb-16">
+            <main className="max-w-2xl mx-auto px-4 sm:px-6 pt-24 pb-24">
+                <div className="mb-8">
+                    <p className="text-xs font-mono text-green-500 uppercase tracking-widest mb-2">Register</p>
+                    <h1 className="text-3xl font-semibold tracking-tight">You are a restaurant?</h1>
+                    <p className="text-muted-foreground mt-1 text-sm">Register your restaurant and start showcasing your menu.</p>
+                </div>
+
+                <Separator className="mb-8" />
+
                 <div className="flex items-center gap-1 sm:gap-2 mb-8">
                     {STEPS.map((label, i) => (
-                        <div key={i} className="flex items-center gap-1 sm:gap-2">
+                        <div key={i} className="flex items-center gap-2 sm:gap-3">
                             <div
                                 className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold transition-colors shrink-0
                                     ${i <= step ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}

@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import Navbar from '@/components/Navbar'
+import BottomNav from '@/components/BottomNav'
 import ItemCard from '@/components/ItemCard'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -149,8 +150,9 @@ export default function DashboardPage() {
     return (
         <div className="min-h-screen bg-background text-foreground">
             <Navbar />
+            <BottomNav />
 
-            <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-24 pb-12">
+            <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-24 pb-24">
                 <div className="mb-8">
                     <p className="text-xs font-mono text-green-500 uppercase tracking-widest mb-2">Dashboard</p>
                     <h1 className="text-3xl font-semibold tracking-tight">Browse menu</h1>
