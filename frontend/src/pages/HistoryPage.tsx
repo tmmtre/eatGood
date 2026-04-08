@@ -11,6 +11,7 @@ import {
     getMyReviews,
     createReview,
     deleteReview,
+    publishReview,
 } from '@/api/restaurantApi'
 import type {
     MealTime,
@@ -61,6 +62,7 @@ function AddModal({ onClose, onAdded }: AddModalProps) {
     const [anonymous, setAnonymous] = useState(false)
     const [comment, setComment] = useState('')
     const [image, setImage] = useState<File | null>(null)
+    const [publicShare, setPublicShare] = useState(false)
     const [submitting, setSubmitting] = useState(false)
     const [submitError, setSubmitError] = useState('')
     const fileRef = useRef<HTMLInputElement>(null)
@@ -95,7 +97,7 @@ function AddModal({ onClose, onAdded }: AddModalProps) {
         setSubmitError('')
         setSubmitting(true)
         try {
-            const created = await createReview(selectedItem.itemId, { rating, comment, mealTime, anonymous }, image ?? undefined)
+            const created = await createReview(selectedItem.itemId, { rating, comment, mealTime, anonymous, publicReview: publicShare }, image ?? undefined)
             onAdded(created)
         } catch {
             setSubmitError('Failed to save. Try again.')
@@ -179,6 +181,32 @@ function AddModal({ onClose, onAdded }: AddModalProps) {
 
                             <Separator />
 
+                            {/* photo */}
+                            <div className="space-y-1.5">
+                                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Photo</p>
+                                <label className="block w-24 h-24 rounded-xl border border-dashed border-input cursor-pointer overflow-hidden hover:border-foreground transition-colors">
+                                    <input ref={fileRef} type="file" accept="image/*" className="hidden"
+                                        onChange={e => setImage(e.target.files?.[0] ?? null)} />
+                                    {image ? (
+                                        <img
+                                            src={URL.createObjectURL(image)}
+                                            alt="Preview"
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+                                            + Add photo
+                                        </div>
+                                    )}
+                                </label>
+                                {image && (
+                                    <button type="button" className="text-xs text-muted-foreground hover:text-destructive"
+                                        onClick={() => { setImage(null); if (fileRef.current) fileRef.current.value = '' }}>
+                                        Remove
+                                    </button>
+                                )}
+                            </div>
+
                             {/* meal time */}
                             <div className="space-y-1.5">
                                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">When?</p>
@@ -215,36 +243,24 @@ function AddModal({ onClose, onAdded }: AddModalProps) {
                                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
                             />
 
-                            {/* photo */}
-                            <div className="space-y-2">
-                                {image && (
-                                    <img
-                                        src={URL.createObjectURL(image)}
-                                        alt="Preview"
-                                        className="w-full max-h-48 object-cover rounded-lg"
-                                    />
-                                )}
-                                <div className="flex items-center gap-3">
-                                    <label className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
-                                        <input ref={fileRef} type="file" accept="image/*" className="hidden"
-                                            onChange={e => setImage(e.target.files?.[0] ?? null)} />
-                                        {image ? 'Change photo' : '+ Add photo (required)'}
-                                    </label>
-                                    {image && (
-                                        <button type="button" className="text-xs text-muted-foreground hover:text-destructive"
-                                            onClick={() => { setImage(null); if (fileRef.current) fileRef.current.value = '' }}>
-                                            Remove
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-
+                            {/* share as online review toggle */}
                             <label className="flex items-center gap-2 cursor-pointer select-none w-fit">
                                 <input
                                     type="checkbox"
-                                    checked={anonymous}
-                                    onChange={e => setAnonymous(e.target.checked)}
+                                    checked={publicShare}
+                                    onChange={e => setPublicShare(e.target.checked)}
                                     className="rounded border-input"
+                                />
+                                <span className="text-xs text-muted-foreground">Share as online review</span>
+                            </label>
+
+                            <label className={`flex items-center gap-2 select-none w-fit ${publicShare ? 'cursor-pointer' : 'cursor-not-allowed opacity-40'}`}>
+                                <input
+                                    type="checkbox"
+                                    checked={anonymous}
+                                    disabled={!publicShare}
+                                    onChange={e => setAnonymous(e.target.checked)}
+                                    className="rounded border-input disabled:cursor-not-allowed"
                                 />
                                 <span className="text-xs text-muted-foreground">Post anonymously</span>
                             </label>
@@ -252,7 +268,7 @@ function AddModal({ onClose, onAdded }: AddModalProps) {
                             {submitError && <p className="text-xs text-destructive">{submitError}</p>}
 
                             <Button size="sm" disabled={submitting || rating === 0 || !mealTime || !image} onClick={handleSubmit}>
-                                {submitting ? 'Saving...' : 'Save to history'}
+                                {submitting ? 'Saving...' : publicShare ? 'Save & share review' : 'Save to history'}
                             </Button>
                         </div>
                     )}
@@ -268,6 +284,8 @@ export default function HistoryPage() {
     const [reviews, setReviews] = useState<ReviewResponse[]>([])
     const [loading, setLoading] = useState(true)
     const [showAdd, setShowAdd] = useState(false)
+    const [confirmPublishId, setConfirmPublishId] = useState<number | null>(null)
+    const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
 
     useEffect(() => {
         getMyReviews()
@@ -320,6 +338,18 @@ export default function HistoryPage() {
         }
     }
 
+    const handlePublish = async (reviewId: number) => {
+        try {
+            const updated = await publishReview(reviewId)
+            setReviews(prev => prev.map(r => r.id === reviewId ? updated : r))
+        } catch (e) {
+            console.error(e)
+        }
+    }
+
+    const isToday = (dateStr: string) =>
+        new Date(dateStr).toDateString() === new Date().toDateString()
+
     return (
         <div className="min-h-screen bg-background text-foreground">
             <Navbar />
@@ -371,14 +401,23 @@ export default function HistoryPage() {
                                                                 <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{review.comment}</p>
                                                             )}
                                                             <div className="flex items-center gap-3 mt-1">
-                                                                {review.likeCount > 0 && (
-                                                                    <span className="text-xs text-muted-foreground">♥ {review.likeCount}</span>
+                                                                {(review.trustCount + review.untrustCount) > 0 && (
+                                                                    <span className="text-xs text-muted-foreground">{Math.round(review.trustCount / (review.trustCount + review.untrustCount) * 100)}% agree</span>
                                                                 )}
                                                                 {review.anonymous && (
                                                                     <span className="text-xs text-muted-foreground italic">Anonymous</span>
                                                                 )}
+                                                                {!review.publicReview && (
+                                                                    <button
+                                                                        onClick={() => isToday(review.createdAt) ? setConfirmPublishId(review.id) : undefined}
+                                                                        disabled={!isToday(review.createdAt)}
+                                                                        className={`text-xs transition-colors ${isToday(review.createdAt) ? 'text-muted-foreground hover:text-green-500 cursor-pointer' : 'text-muted-foreground/30 cursor-not-allowed'}`}
+                                                                    >
+                                                                        Share online
+                                                                    </button>
+                                                                )}
                                                                 <button
-                                                                    onClick={() => handleDelete(review.id)}
+                                                                    onClick={() => setConfirmDeleteId(review.id)}
                                                                     className="text-xs text-muted-foreground hover:text-destructive transition-colors"
                                                                 >
                                                                     Delete
@@ -406,6 +445,59 @@ export default function HistoryPage() {
             </main>
 
             {showAdd && <AddModal onClose={() => setShowAdd(false)} onAdded={handleAdded} />}
+
+            {confirmDeleteId !== null && (() => {
+                const isPublic = reviews.find(r => r.id === confirmDeleteId)?.publicReview ?? false
+                return (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4" onClick={() => setConfirmDeleteId(null)}>
+                        <div className="bg-background rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4" onClick={e => e.stopPropagation()}>
+                            <h2 className="text-sm font-semibold">Delete this entry?</h2>
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                                This will permanently delete this entry from your history.
+                                {isPublic && (
+                                    <> It will also be <span className="text-foreground font-medium">removed from the online reviews</span> of this item.</>
+                                )}
+                            </p>
+                            <div className="flex gap-2 pt-1">
+                                <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    className="flex-1"
+                                    onClick={() => { void handleDelete(confirmDeleteId); setConfirmDeleteId(null) }}
+                                >
+                                    Delete permanently
+                                </Button>
+                                <Button size="sm" variant="outline" className="flex-1" onClick={() => setConfirmDeleteId(null)}>
+                                    Cancel
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            })()}
+
+            {confirmPublishId !== null && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4" onClick={() => setConfirmPublishId(null)}>
+                    <div className="bg-background rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4" onClick={e => e.stopPropagation()}>
+                        <h2 className="text-sm font-semibold">Share this review online?</h2>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                            This will make your review visible to everyone. <span className="text-foreground font-medium">This cannot be undone</span> — once shared, you will be only able to delete it.
+                        </p>
+                        <div className="flex gap-2 pt-1">
+                            <Button
+                                size="sm"
+                                onClick={() => { void handlePublish(confirmPublishId); setConfirmPublishId(null) }}
+                                className="flex-1"
+                            >
+                                Share permanently
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => setConfirmPublishId(null)} className="flex-1">
+                                Cancel
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

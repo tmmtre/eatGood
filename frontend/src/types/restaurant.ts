@@ -82,12 +82,14 @@ export interface ReviewResponse {
     imageUrl: string | null
     createdAt: string
     user: ReviewUserDto
-    likeCount: number
-    likedByCurrentUser: boolean
+    trustCount: number
+    untrustCount: number
+    currentUserVote: 'TRUST' | 'UNTRUST' | null
     mealTime: MealTime | null
     itemName: string
     restaurantName: string
     anonymous: boolean
+    publicReview: boolean
 }
 
 export interface MenuItemResponse {
@@ -99,6 +101,8 @@ export interface MenuItemResponse {
     imageUrl?: string | null
     averageRating?: number | null
     reviewCount?: number
+    sourceReviewId?: number | null
+    restaurantId?: number | null
 }
 
 export interface MenuSectionResponse {

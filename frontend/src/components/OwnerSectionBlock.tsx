@@ -15,17 +15,11 @@ const OwnerSectionBlock = memo(function OwnerSectionBlock({
     section,
     onSectionUpdate,
     onSectionDelete,
-    onItemUpdate,
-    onItemDelete,
-    onItemToggle,
     onItemAdd,
 }: {
     section: MenuSectionResponse
     onSectionUpdate: (id: number, name: string, category: SectionCategory) => Promise<void>
     onSectionDelete: (id: number) => Promise<void>
-    onItemUpdate: (sectionId: number, itemId: number, draft: ItemDraft) => Promise<void>
-    onItemDelete: (sectionId: number, itemId: number) => Promise<void>
-    onItemToggle: (sectionId: number, itemId: number, available: boolean) => Promise<void>
     onItemAdd: (sectionId: number, draft: ItemDraft) => Promise<void>
 }) {
     const [editingName, setEditingName] = useState(false)
@@ -112,13 +106,7 @@ const OwnerSectionBlock = memo(function OwnerSectionBlock({
                 )}
 
                 {section.items?.map(item => (
-                    <ItemRow
-                        key={item.id}
-                        item={item}
-                        onUpdate={(id, draft) => onItemUpdate(section.id, id, draft)}
-                        onDelete={(id) => onItemDelete(section.id, id)}
-                        onToggle={(id, available) => onItemToggle(section.id, id, available)}
-                    />
+                    <ItemRow key={item.id} item={item} />
                 ))}
 
                 {addingItem && (

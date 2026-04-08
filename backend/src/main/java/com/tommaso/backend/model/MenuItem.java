@@ -40,6 +40,8 @@ public class MenuItem {
     @Column(unique = true)
     private String imageId;
 
+    private Long sourceReviewId;
+
     @Column(nullable = false)
     private Boolean available = true;
 

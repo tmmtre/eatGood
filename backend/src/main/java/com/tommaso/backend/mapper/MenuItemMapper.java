@@ -40,7 +40,9 @@ public class MenuItemMapper implements Function<MenuItem, MenuItemResponse> {
                         : null,
                 i.getCreatedAt(),
                 reviewRepository.findAverageRatingByMenuItemId(i.getId()),
-                reviewRepository.countByMenuItemId(i.getId())
+                reviewRepository.countByMenuItemIdAndPublicReviewTrue(i.getId()),
+                i.getSourceReviewId(),
+                i.getSection().getRestaurant().getId()
         );
     }
 }

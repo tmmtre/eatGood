@@ -12,5 +12,7 @@ public record MenuItemResponse(
         String imageUrl,
         LocalDateTime createdAt,
         Double averageRating,
-        Long reviewCount
+        Long reviewCount,
+        Long sourceReviewId,
+        Long restaurantId
 ) {}

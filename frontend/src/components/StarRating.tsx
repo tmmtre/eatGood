@@ -3,7 +3,6 @@ import { useState } from 'react'
 interface StarRatingProps {
     value: number
     interactive?: false
-    showValue?: boolean
     size?: 'sm' | 'md'
 }
 
@@ -16,6 +15,26 @@ interface InteractiveStarRatingProps {
 
 type Props = StarRatingProps | InteractiveStarRatingProps
 
+function StarIcon({ fill, size }: { fill: 'full' | 'half' | 'empty'; size: string }) {
+    if (fill === 'full') return <span className={`${size} text-yellow-400`}>★</span>
+    if (fill === 'empty') return <span className={`${size} text-muted-foreground/30`}>★</span>
+    return (
+        <span className={`${size} relative inline-block`}>
+            <span className="text-muted-foreground/30">★</span>
+            <span
+                className="absolute top-0 left-0 block overflow-hidden whitespace-nowrap text-yellow-400"
+                style={{ width: '50%' }}
+            >★</span>
+        </span>
+    )
+}
+
+function getFill(n: number, val: number): 'full' | 'half' | 'empty' {
+    if (val >= n) return 'full'
+    if (val >= n - 0.5) return 'half'
+    return 'empty'
+}
+
 export default function StarRating(props: Props) {
     const { value, size = 'sm' } = props
     const [hovered, setHovered] = useState(0)
@@ -26,12 +45,10 @@ export default function StarRating(props: Props) {
         return (
             <span className={`inline-flex items-center gap-0.5 ${starSize}`}>
                 {[1, 2, 3, 4, 5].map(n => (
-                    <span key={n} className={n <= Math.round(value) ? 'text-yellow-400' : 'text-muted-foreground/30'}>
-                        ★
-                    </span>
+                    <StarIcon key={n} fill={getFill(n, value)} size={starSize} />
                 ))}
-                {props.showValue && value > 0 && (
-                    <span className="ml-1 text-xs text-muted-foreground">{value.toFixed(1)}</span>
+                {value > 0 && (
+                    <span className="ml-1 text-xs text-muted-foreground">{value % 1 === 0 ? value.toFixed(0) : value.toFixed(1)}</span>
                 )}
             </span>
         )
@@ -41,18 +58,28 @@ export default function StarRating(props: Props) {
 
     return (
         <span className={`inline-flex items-center gap-0.5 ${starSize}`}>
+
             {[1, 2, 3, 4, 5].map(n => (
                 <button
                     key={n}
                     type="button"
-                    className={`transition-colors ${n <= active ? 'text-yellow-400' : 'text-muted-foreground/30'} hover:text-yellow-400`}
-                    onMouseEnter={() => setHovered(n)}
+                    className="relative transition-colors"
+                    onMouseMove={e => {
+                        const { left, width } = e.currentTarget.getBoundingClientRect()
+                        setHovered(e.clientX < left + width / 2 ? n - 0.5 : n)
+                    }}
                     onMouseLeave={() => setHovered(0)}
-                    onClick={() => props.onChange(n)}
+                    onClick={e => {
+                        const { left, width } = e.currentTarget.getBoundingClientRect()
+                        props.onChange(e.clientX < left + width / 2 ? n - 0.5 : n)
+                    }}
                 >
-                    ★
+                    <StarIcon fill={getFill(n, active)} size={starSize} />
                 </button>
             ))}
+            {active > 0 && (
+                <span className="ml-1 text-xs text-muted-foreground">{active % 1 === 0 ? active.toFixed(0) : active.toFixed(1)}</span>
+            )}
         </span>
     )
 }

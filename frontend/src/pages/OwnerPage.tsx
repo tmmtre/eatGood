@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuthStore } from '@/store/authStore'
+import { NavLink } from 'react-router-dom'
+import { LayoutGrid } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
@@ -15,8 +17,6 @@ import {
     updateMenuSection,
     deleteMenuSection,
     createMenuItem,
-    updateMenuItem,
-    deleteMenuItem,
 } from '@/api/restaurantApi'
 import type { RestaurantResponse, MenuSectionResponse, ItemDraft, SectionCategory } from '@/types/restaurant'
 import { SECTION_CATEGORIES, CATEGORY_LABELS } from '@/types/restaurant'
@@ -101,69 +101,23 @@ export default function OwnerPage() {
         }
     }, [restaurant])
 
-    const handleItemUpdate = useCallback(async (sectionId: number, itemId: number, draft: ItemDraft) => {
-        try {
-            await updateMenuItem(itemId, {
-                name: draft.name,
-                description: draft.description,
-                price: Number(draft.price),
-                available: draft.available,
-            })
-            setSections(prev => prev.map(s =>
-                s.id === sectionId
-                    ? {
-                        ...s, items: s.items.map(i =>
-                            i.id === itemId
-                                ? { ...i, name: draft.name, description: draft.description, price: Number(draft.price), available: draft.available }
-                                : i
-                        )
-                    }
-                    : s
-            ))
-        } catch (e) {
-            console.error(e)
-        }
-    }, [])
-
-    const handleItemDelete = useCallback(async (sectionId: number, itemId: number) => {
-        try {
-            await deleteMenuItem(itemId)
-            setSections(prev => prev.map(s =>
-                s.id === sectionId
-                    ? { ...s, items: s.items.filter(i => i.id !== itemId) }
-                    : s
-            ))
-        } catch (e) {
-            console.error(e)
-        }
-    }, [])
-
-    const handleItemToggle = useCallback(async (sectionId: number, itemId: number, available: boolean) => {
-        const section = sections.find(s => s.id === sectionId)
-        const item = section?.items.find(i => i.id === itemId)
-        if (!item) return
-        try {
-            await updateMenuItem(itemId, {
-                name: item.name,
-                description: item.description,
-                price: item.price,
-                available,
-            })
-            setSections(prev => prev.map(s =>
-                s.id === sectionId
-                    ? { ...s, items: s.items.map(i => i.id === itemId ? { ...i, available } : i) }
-                    : s
-            ))
-        } catch (e) {
-            console.error(e)
-        }
-    }, [sections])
-
     return (
         <div className="min-h-screen bg-background text-foreground">
             <Navbar />
 
-            <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-24 pb-12">
+            <nav className="fixed bottom-0 left-0 right-0 z-50 h-16 bg-background/90 backdrop-blur border-t border-border flex items-center justify-around px-2">
+                <NavLink
+                    to="/dashboard"
+                    className={({ isActive }) =>
+                        `flex flex-col items-center gap-0.5 px-4 py-1 rounded-lg transition-colors ${isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`
+                    }
+                >
+                    <LayoutGrid size={20} strokeWidth={1.75} />
+                    <span className="text-[10px] font-medium">Dashboard</span>
+                </NavLink>
+            </nav>
+
+            <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-24 pb-24">
                 <div className="mb-8">
                     <p className="text-xs font-mono text-primary uppercase tracking-widest mb-2">Owner Panel</p>
                     <h1 className="text-3xl font-semibold tracking-tight">Your Workspace</h1>
@@ -267,9 +221,6 @@ export default function OwnerPage() {
                                         section={section}
                                         onSectionUpdate={handleSectionUpdate}
                                         onSectionDelete={handleSectionDelete}
-                                        onItemUpdate={handleItemUpdate}
-                                        onItemDelete={handleItemDelete}
-                                        onItemToggle={handleItemToggle}
                                         onItemAdd={handleItemAdd}
                                     />
                                 ))}

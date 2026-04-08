@@ -2,8 +2,11 @@ package com.tommaso.backend.service;
 
 import com.tommaso.backend.model.MenuItem;
 import com.tommaso.backend.model.MenuSection;
+import com.tommaso.backend.model.Review;
 import com.tommaso.backend.repository.MenuItemRepository;
 import com.tommaso.backend.repository.MenuSectionRepository;
+import com.tommaso.backend.repository.ReviewRepository;
+import com.tommaso.backend.repository.ReviewVoteRepository;
 import com.tommaso.backend.s3.S3Buckets;
 import com.tommaso.backend.s3.S3Service;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +24,8 @@ public class MenuItemService {
 
     private final MenuItemRepository menuItemRepository;
     private final MenuSectionRepository menuSectionRepository;
+    private final ReviewRepository reviewRepository;
+    private final ReviewVoteRepository reviewVoteRepository;
     private final S3Service s3Service;
     private final S3Buckets s3Buckets;
 
@@ -74,14 +79,61 @@ public MenuItem create(Long sectionId, MenuItem item, MultipartFile image) throw
                     image.getBytes()
             );
             existing.setImageId(imageId);
+            existing.setSourceReviewId(null);
         }
 
         return menuItemRepository.save(existing);
     }
 
     @Transactional
+    public MenuItem setImageFromReview(Long itemId, Long reviewId) {
+        MenuItem item = findById(itemId);
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("Review not found"));
+
+        if (review.getImageId() == null) {
+            throw new RuntimeException("Review has no image");
+        }
+
+        if (item.getImageId() != null) {
+            s3Service.deleteObject(
+                    s3Buckets.getRestaurant(),
+                    "menu-items/%s/%s".formatted(item.getSection().getId(), item.getImageId())
+            );
+        }
+
+        String newImageId = UUID.randomUUID().toString();
+        byte[] imageBytes = s3Service.getObject(
+                s3Buckets.getRestaurant(),
+                "reviews/%s/%s".formatted(itemId, review.getImageId())
+        );
+        s3Service.putObject(
+                s3Buckets.getRestaurant(),
+                "menu-items/%s/%s".formatted(item.getSection().getId(), newImageId),
+                imageBytes
+        );
+
+        item.setImageId(newImageId);
+        item.setSourceReviewId(reviewId);
+        return menuItemRepository.save(item);
+    }
+
+    @Transactional
     public void delete(Long id) {
         MenuItem item = findById(id);
+
+        List<Review> reviews = reviewRepository.findByMenuItemIdOrderByCreatedAtDesc(id);
+        for (Review review : reviews) {
+            reviewVoteRepository.deleteByReviewId(review.getId());
+            if (review.getImageId() != null) {
+                s3Service.deleteObject(
+                        s3Buckets.getRestaurant(),
+                        "reviews/%s/%s".formatted(id, review.getImageId())
+                );
+            }
+        }
+        reviewRepository.deleteByMenuItemId(id);
+
         if (item.getImageId() != null) {
             Long sectionId = item.getSection().getId();
             s3Service.deleteObject(

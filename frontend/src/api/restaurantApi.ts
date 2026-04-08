@@ -1,6 +1,11 @@
 import api from './axios'
 import type { MealTime, MenuItemResponse, MenuSectionResponse, RestaurantResponse, RestaurantWithMenu, ReviewResponse, SectionCategory } from '../types/restaurant'
 
+export const getRestaurant = async (id: number): Promise<RestaurantResponse> => {
+    const res = await api.get<RestaurantResponse>(`/restaurants/${id}`)
+    return res.data
+}
+
 export const createRestaurant = async (
     userId: string,
     data: { name: string; description: string; address: string; city: string }
@@ -109,6 +114,11 @@ export const deleteMenuItem = async (id: number): Promise<void> => {
     await api.delete(`/items/${id}`)
 }
 
+export const setItemImageFromReview = async (itemId: number, reviewId: number): Promise<MenuItemResponse> => {
+    const res = await api.put<MenuItemResponse>(`/items/${itemId}/image-from-review/${reviewId}`)
+    return res.data
+}
+
 export const getReviewsByItem = async (menuItemId: number): Promise<ReviewResponse[]> => {
     const res = await api.get<ReviewResponse[]>(`/reviews/item/${menuItemId}`)
     return res.data
@@ -116,7 +126,7 @@ export const getReviewsByItem = async (menuItemId: number): Promise<ReviewRespon
 
 export const createReview = async (
     menuItemId: number,
-    data: { rating: number; comment: string; mealTime: MealTime | null; anonymous: boolean },
+    data: { rating: number; comment: string; mealTime: MealTime | null; anonymous: boolean; publicReview?: boolean },
     image?: File
 ): Promise<ReviewResponse> => {
     const formData = new FormData()
@@ -137,7 +147,12 @@ export const deleteReview = async (reviewId: number): Promise<void> => {
     await api.delete(`/reviews/${reviewId}`)
 }
 
-export const toggleReviewLike = async (reviewId: number): Promise<ReviewResponse> => {
-    const res = await api.post<ReviewResponse>(`/reviews/${reviewId}/like`)
+export const publishReview = async (reviewId: number): Promise<ReviewResponse> => {
+    const res = await api.put<ReviewResponse>(`/reviews/${reviewId}/publish`)
+    return res.data
+}
+
+export const voteReview = async (reviewId: number, trusted: boolean): Promise<ReviewResponse> => {
+    const res = await api.post<ReviewResponse>(`/reviews/${reviewId}/vote`, null, { params: { trusted } })
     return res.data
 }

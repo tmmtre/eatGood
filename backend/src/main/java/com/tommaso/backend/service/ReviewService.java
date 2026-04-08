@@ -5,11 +5,11 @@ import com.tommaso.backend.dto.response.ReviewResponse;
 import com.tommaso.backend.mapper.ReviewMapper;
 import com.tommaso.backend.model.MenuItem;
 import com.tommaso.backend.model.Review;
-import com.tommaso.backend.model.ReviewLike;
+import com.tommaso.backend.model.ReviewVote;
 import com.tommaso.backend.model.User;
 import com.tommaso.backend.repository.MenuItemRepository;
-import com.tommaso.backend.repository.ReviewLikeRepository;
 import com.tommaso.backend.repository.ReviewRepository;
+import com.tommaso.backend.repository.ReviewVoteRepository;
 import com.tommaso.backend.repository.UserRepository;
 import com.tommaso.backend.s3.S3Buckets;
 import com.tommaso.backend.s3.S3Service;
@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,7 +29,7 @@ import java.util.UUID;
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
-    private final ReviewLikeRepository reviewLikeRepository;
+    private final ReviewVoteRepository reviewVoteRepository;
     private final MenuItemRepository menuItemRepository;
     private final UserRepository userRepository;
     private final ReviewMapper reviewMapper;
@@ -38,26 +39,26 @@ public class ReviewService {
     @Transactional(readOnly = true)
     public List<ReviewResponse> findByMenuItemId(Long menuItemId, Authentication auth) {
         String userId = resolveUserId(auth);
-        return reviewRepository.findByMenuItemIdOrderByCreatedAtDesc(menuItemId)
+        return reviewRepository.findByMenuItemIdAndPublicReviewTrueOrderByCreatedAtDesc(menuItemId)
                 .stream()
                 .map(r -> reviewMapper.apply(r, userId))
                 .toList();
     }
 
     @Transactional
-    public ReviewResponse toggleLike(Long reviewId, Authentication auth) {
+    public ReviewResponse vote(Long reviewId, boolean trusted, Authentication auth) {
         User user = userRepository.findByEmail(auth.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new RuntimeException("Review not found"));
 
-        reviewLikeRepository.findByReviewIdAndUserId(reviewId, user.getId())
-                .ifPresentOrElse(
-                        reviewLikeRepository::delete,
-                        () -> reviewLikeRepository.save(
-                                ReviewLike.builder().review(review).user(user).build()
-                        )
-                );
+        if (reviewVoteRepository.existsByReviewIdAndUserId(reviewId, user.getId())) {
+            throw new IllegalStateException("You have already voted on this review");
+        }
+
+        reviewVoteRepository.save(
+                ReviewVote.builder().review(review).user(user).trusted(trusted).build()
+        );
 
         return reviewMapper.apply(review, user.getId());
     }
@@ -84,8 +85,8 @@ public class ReviewService {
         User user = userRepository.findByEmail(auth.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (reviewRepository.existsByMenuItemIdAndUserId(menuItemId, user.getId())) {
-            throw new IllegalStateException("You have already reviewed this item");
+        if (request.isPublicReview() && reviewRepository.existsByMenuItemIdAndUserIdAndPublicReviewTrue(menuItemId, user.getId())) {
+            throw new IllegalStateException("You have already posted a public review for this item");
         }
 
         MenuItem menuItem = menuItemRepository.findById(menuItemId)
@@ -96,25 +97,52 @@ public class ReviewService {
                 .comment(request.getComment())
                 .mealTime(request.getMealTime())
                 .anonymous(request.isAnonymous())
+                .publicReview(request.isPublicReview())
                 .menuItem(menuItem)
                 .user(user)
                 .build();
 
         if (image == null || image.isEmpty()) {
-            throw new IllegalArgumentException("A photo is required for reviews");
+            throw new IllegalArgumentException("A photo is required");
         }
-        String imageId = UUID.randomUUID().toString();
-        s3Service.putObject(
-                s3Buckets.getRestaurant(),
-                "reviews/%s/%s".formatted(menuItemId, imageId),
-                image.getBytes()
-        );
-        review.setImageId(imageId);
+        if (image != null && !image.isEmpty()) {
+            String imageId = UUID.randomUUID().toString();
+            s3Service.putObject(
+                    s3Buckets.getRestaurant(),
+                    "reviews/%s/%s".formatted(menuItemId, imageId),
+                    image.getBytes()
+            );
+            review.setImageId(imageId);
+        }
 
         return reviewMapper.apply(reviewRepository.save(review));
     }
 
-@Transactional
+    @Transactional
+    public ReviewResponse publish(Long reviewId, Authentication auth) {
+        User user = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("Review not found"));
+
+        if (!review.getUser().getId().equals(user.getId())) {
+            throw new SecurityException("Not authorized");
+        }
+        if (!review.getCreatedAt().toLocalDate().equals(LocalDate.now())) {
+            throw new IllegalStateException("Reviews can only be shared on the day they were created");
+        }
+        if (review.isPublicReview()) {
+            throw new IllegalStateException("Review is already public");
+        }
+        if (reviewRepository.existsByMenuItemIdAndUserIdAndPublicReviewTrue(review.getMenuItem().getId(), user.getId())) {
+            throw new IllegalStateException("You have already posted a public review for this item");
+        }
+
+        review.setPublicReview(true);
+        return reviewMapper.apply(reviewRepository.save(review), user.getId());
+    }
+
+    @Transactional
     public void delete(Long reviewId, Authentication auth) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new RuntimeException("Review not found"));
@@ -127,7 +155,7 @@ public class ReviewService {
             throw new SecurityException("Not authorized to delete this review");
         }
 
-        reviewLikeRepository.deleteByReviewId(reviewId);
+        reviewVoteRepository.deleteByReviewId(reviewId);
 
         if (review.getImageId() != null) {
             s3Service.deleteObject(
@@ -135,6 +163,12 @@ public class ReviewService {
                     "reviews/%s/%s".formatted(review.getMenuItem().getId(), review.getImageId())
             );
         }
+
+        menuItemRepository.findBySourceReviewId(reviewId)
+                .forEach(item -> {
+                    item.setSourceReviewId(null);
+                    menuItemRepository.save(item);
+                });
 
         reviewRepository.delete(review);
     }

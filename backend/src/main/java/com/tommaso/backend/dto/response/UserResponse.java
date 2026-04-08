@@ -11,6 +11,7 @@ public record UserResponse(
         Boolean emailVerified,
         String profileImageId,
         String profileImageUrl,
-        long totalLikesReceived,
-        LocalDateTime createdAt
+        Double trustPercentage,
+        LocalDateTime createdAt,
+        Long ownerPickCount
 ) {}

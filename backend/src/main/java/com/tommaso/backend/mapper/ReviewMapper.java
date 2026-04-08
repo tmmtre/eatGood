@@ -2,7 +2,7 @@ package com.tommaso.backend.mapper;
 
 import com.tommaso.backend.dto.response.ReviewResponse;
 import com.tommaso.backend.model.Review;
-import com.tommaso.backend.repository.ReviewLikeRepository;
+import com.tommaso.backend.repository.ReviewVoteRepository;
 import com.tommaso.backend.s3.S3Buckets;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -16,11 +16,11 @@ public class ReviewMapper implements Function<Review, ReviewResponse> {
     private String awsRegion;
 
     private final S3Buckets s3Buckets;
-    private final ReviewLikeRepository reviewLikeRepository;
+    private final ReviewVoteRepository reviewVoteRepository;
 
-    public ReviewMapper(S3Buckets s3Buckets, ReviewLikeRepository reviewLikeRepository) {
+    public ReviewMapper(S3Buckets s3Buckets, ReviewVoteRepository reviewVoteRepository) {
         this.s3Buckets = s3Buckets;
-        this.reviewLikeRepository = reviewLikeRepository;
+        this.reviewVoteRepository = reviewVoteRepository;
     }
 
     @Override
@@ -37,8 +37,16 @@ public class ReviewMapper implements Function<Review, ReviewResponse> {
                 + r.getImageId()
                 : null;
 
-        long likeCount = reviewLikeRepository.countByReviewId(r.getId());
-        boolean liked = userId != null && reviewLikeRepository.existsByReviewIdAndUserId(r.getId(), userId);
+        long trustCount = reviewVoteRepository.countByReviewIdAndTrusted(r.getId(), true);
+        long untrustCount = reviewVoteRepository.countByReviewIdAndTrusted(r.getId(), false);
+
+        String currentUserVote = null;
+        if (userId != null) {
+            var optVote = reviewVoteRepository.findByReviewIdAndUserId(r.getId(), userId);
+            if (optVote.isPresent()) {
+                currentUserVote = optVote.get().isTrusted() ? "TRUST" : "UNTRUST";
+            }
+        }
 
         String restaurantName = r.getMenuItem().getSection().getRestaurant().getName();
         boolean anon = r.isAnonymous();
@@ -54,12 +62,14 @@ public class ReviewMapper implements Function<Review, ReviewResponse> {
                         anon ? "Anonymous" : r.getUser().getFirstName(),
                         anon ? "" : r.getUser().getLastName()
                 ),
-                likeCount,
-                liked,
+                trustCount,
+                untrustCount,
+                currentUserVote,
                 r.getMealTime(),
                 r.getMenuItem().getName(),
                 restaurantName,
-                anon
+                anon,
+                r.isPublicReview()
         );
     }
 }

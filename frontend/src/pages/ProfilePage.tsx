@@ -4,6 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import Cropper from 'react-easy-crop'
 import type { Area } from 'react-easy-crop'
+import { NavLink } from 'react-router-dom'
+import { LayoutGrid } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import BottomNav from '@/components/BottomNav'
 import { Button } from '@/components/ui/button'
@@ -138,7 +140,8 @@ function CropModal({ src, onCancel, onConfirm }: CropModalProps) {
 export default function ProfilePage() {
     const { user, updateUser } = useAuthStore()
     const [hasImage, setHasImage] = useState(false)
-    const [totalLikes, setTotalLikes] = useState<number | null>(null)
+    const [trustPercentage, setTrustPercentage] = useState<number | null>(null)
+    const [ownerPickCount, setOwnerPickCount] = useState(0)
     const [photoUploading, setPhotoUploading] = useState(false)
     const [photoError, setPhotoError] = useState('')
     const [cropSrc, setCropSrc] = useState<string | null>(null)
@@ -164,7 +167,8 @@ export default function ProfilePage() {
         getUser(user.id)
             .then(data => {
                 setHasImage(!!data.profileImageId)
-                setTotalLikes(data.totalLikesReceived)
+                setTrustPercentage(data.trustPercentage ?? null)
+                setOwnerPickCount(data.ownerPickCount)
                 updateUser({ profileImageId: data.profileImageId })
                 infoForm.reset({
                     firstName: data.firstName,
@@ -247,6 +251,15 @@ export default function ProfilePage() {
         <div className="min-h-screen bg-background text-foreground">
             <Navbar />
             {user?.role === 'USER' && <BottomNav />}
+            {user?.role === 'OWNER' && (
+                <nav className="fixed bottom-0 left-0 right-0 z-50 h-16 bg-background/90 backdrop-blur border-t border-border flex items-center justify-around px-2">
+                    <NavLink to="/dashboard"
+                        className={({ isActive }) => `flex flex-col items-center gap-0.5 px-4 py-1 rounded-lg transition-colors ${isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
+                        <LayoutGrid size={20} strokeWidth={1.75} />
+                        <span className="text-[10px] font-medium">Dashboard</span>
+                    </NavLink>
+                </nav>
+            )}
 
             <main className="max-w-xl mx-auto px-4 sm:px-6 pt-24 pb-24 space-y-8">
                 <div>
@@ -287,9 +300,24 @@ export default function ProfilePage() {
                             onChange={handleFileSelect}
                         />
                         <p className="text-xs text-muted-foreground">Click to change photo</p>
-                        {totalLikes !== null && (
+                        {trustPercentage !== null && (
+                            <div className="flex flex-col items-center gap-1 w-full max-w-[200px]">
+                                <p className="text-sm text-muted-foreground">
+                                    Trust score:{' '}
+                                    <span className={`font-semibold ${trustPercentage >= 50 ? 'text-green-600' : 'text-red-500'}`}>
+                                        {Math.round(trustPercentage)}%
+                                    </span>
+                                </p>
+                                <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                                    <div className="bg-green-500" style={{ width: `${trustPercentage}%` }} />
+                                    <div className="bg-red-400" style={{ width: `${100 - trustPercentage}%` }} />
+                                </div>
+                            </div>
+                        )}
+                        {ownerPickCount > 0 && (
                             <p className="text-sm text-muted-foreground">
-                                ♥ <span className="font-semibold text-foreground">{totalLikes}</span> {totalLikes === 1 ? 'like' : 'likes'} received
+                                Owner picked your image{' '}
+                                <span className="font-semibold text-primary">{ownerPickCount}×</span>
                             </p>
                         )}
                         {photoError && <p className="text-xs text-destructive">{photoError}</p>}

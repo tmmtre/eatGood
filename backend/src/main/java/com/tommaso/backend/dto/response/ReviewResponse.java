@@ -6,17 +6,19 @@ import java.time.LocalDateTime;
 
 public record ReviewResponse(
         Long id,
-        int rating,
+        double rating,
         String comment,
         String imageUrl,
         LocalDateTime createdAt,
         ReviewUserDto user,
-        long likeCount,
-        boolean likedByCurrentUser,
+        long trustCount,
+        long untrustCount,
+        String currentUserVote,
         MealTime mealTime,
         String itemName,
         String restaurantName,
-        boolean anonymous
+        boolean anonymous,
+        boolean publicReview
 ) {
     public record ReviewUserDto(String id, String firstName, String lastName) {}
 }

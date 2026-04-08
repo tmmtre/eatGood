@@ -41,7 +41,7 @@ public class MenuItemController {
     }
 
     @PostMapping(value = "/section/{sectionId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
     public ResponseEntity<MenuItemResponse> create(
             @PathVariable Long sectionId,
             @RequestPart("item") @Valid MenuItemRequest request,
@@ -71,6 +71,14 @@ public class MenuItemController {
                 .available(request.getAvailable())
                 .build();
         return ResponseEntity.ok(menuItemMapper.apply(menuItemService.update(id, updated, image)));
+    }
+
+    @PutMapping("/{itemId}/image-from-review/{reviewId}")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    public ResponseEntity<MenuItemResponse> setImageFromReview(
+            @PathVariable Long itemId,
+            @PathVariable Long reviewId) {
+        return ResponseEntity.ok(menuItemMapper.apply(menuItemService.setImageFromReview(itemId, reviewId)));
     }
 
     @DeleteMapping("/{id}")

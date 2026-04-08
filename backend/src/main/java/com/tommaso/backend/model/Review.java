@@ -2,8 +2,8 @@ package com.tommaso.backend.model;
 
 import com.tommaso.backend.model.enums.MealTime;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,13 +14,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(
-        name = "reviews",
-        uniqueConstraints = @UniqueConstraint(
-                name = "review_user_item_unique",
-                columnNames = {"menu_item_id", "user_id"}
-        )
-)
+@Table(name = "reviews")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -31,10 +25,10 @@ public class Review {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Min(1)
-    @Max(5)
+    @DecimalMin("0.5")
+    @DecimalMax("5.0")
     @Column(nullable = false)
-    private int rating;
+    private double rating;
 
     @Column(columnDefinition = "TEXT")
     private String comment;
@@ -47,6 +41,9 @@ public class Review {
 
     @Column(nullable = false)
     private boolean anonymous = false;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean publicReview = false;
 
     @CreationTimestamp
     @Column(updatable = false)

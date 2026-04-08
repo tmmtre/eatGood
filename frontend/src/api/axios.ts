@@ -13,11 +13,11 @@ api.interceptors.request.use((config) => {
     return config
 })
 
-// Auto-logout on 401
 api.interceptors.response.use(
     (res) => res,
     (error) => {
-        if (error.response?.status === 401) {
+        const isAuthEndpoint = error.config?.url?.includes('/auth/')
+        if (error.response?.status === 401 && !isAuthEndpoint) {
             useAuthStore.getState().logout()
             window.location.href = '/login'
         }

@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.util.List;
 
 @RestController
-@RequestMapping("api/v1/reviews")
+@RequestMapping("/api/v1/reviews")
 @RequiredArgsConstructor
 public class ReviewController {
 
@@ -36,15 +36,16 @@ public class ReviewController {
         return ResponseEntity.ok(reviewService.findMyReviews(authentication));
     }
 
-    @PostMapping("/{reviewId}/like")
+    @PostMapping("/{reviewId}/vote")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ReviewResponse> toggleLike(
+    public ResponseEntity<ReviewResponse> vote(
             @PathVariable Long reviewId,
+            @RequestParam boolean trusted,
             Authentication authentication) {
-        return ResponseEntity.ok(reviewService.toggleLike(reviewId, authentication));
+        return ResponseEntity.ok(reviewService.vote(reviewId, trusted, authentication));
     }
 
-@PostMapping(value = "/item/{menuItemId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/item/{menuItemId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ReviewResponse> create(
             @PathVariable Long menuItemId,
@@ -53,6 +54,14 @@ public class ReviewController {
             Authentication authentication) throws IOException {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(reviewService.create(menuItemId, request, image, authentication));
+    }
+
+    @PutMapping("/{reviewId}/publish")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ReviewResponse> publish(
+            @PathVariable Long reviewId,
+            Authentication authentication) {
+        return ResponseEntity.ok(reviewService.publish(reviewId, authentication));
     }
 
     @DeleteMapping("/{reviewId}")

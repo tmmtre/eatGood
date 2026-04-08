@@ -9,8 +9,9 @@ export interface UserResponse {
     emailVerified: boolean
     profileImageId: string | null
     profileImageUrl: string | null
-    totalLikesReceived: number
+    trustPercentage: number | null
     createdAt: string
+    ownerPickCount: number
 }
 
 export const getUser = async (id: string): Promise<UserResponse> => {
